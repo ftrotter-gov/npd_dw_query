@@ -1,29 +1,37 @@
 """
-Snowflake Parallel CSV Downloader with Polling
+Snowflake Parallel CSV Downloader — Per-Table Pipeline
 
-Python replacement for download_and_merge_with_polling.sh
+For each table exported by Snowflake this script runs a complete pipeline:
 
-This script coordinates with the Snowflake export loop (snowflake_notebook_cell_2.py)
-to download exported CSV files. It monitors the Snowflake stage (@~/) for new files,
-downloads them all at once, removes them from the stage, then waits for the next batch.
+    DOWNLOAD parts from @~/
+    → MERGE parts into single CSV on laptop
+    → UPLOAD merged CSV to S3
+    → VALIDATE the S3 upload (size check)
+    → CLEAN UP all local files (parts + merged)
+    → REMOVE parts from Snowflake stage  ← signals Snowflake: export next table
+    → wait for next table ...
 
-Snowflake is only authenticated 3 times per polling cycle:
-  1. LIST - check for new files
-  2. GET  - download all files at once
-  3. REMOVE - clear stage
+This design ensures the laptop never accumulates more than one table's worth
+of data at a time, so disk space is not a bottleneck.
 
 Configuration: Reads from idr2/.env
-Logging: Prints with timestamps and writes to download_progress.log
+Logging: Prints with timestamps and appends to download_progress.log
 
 Usage:
-    python3 idr2/download_and_merge_with_polling.py
+    python3 idr2/local_laptop/step4_download_merge_upload.py
+
+Resume / restart:
+    If the script was interrupted, just restart it. On startup it checks
+    the download directory for pre-existing CSV parts. If found, it runs
+    the full pipeline on them (merge → S3 → validate → clean → remove stage)
+    before entering the main polling loop.
 """
 
+import hashlib
 import os
 import sys
 import time
 import subprocess
-import glob
 from pathlib import Path
 from datetime import datetime
 
@@ -33,7 +41,7 @@ from datetime import datetime
 # ============================================================================
 
 def load_env(env_file):
-    """Load key=value pairs from .env file."""
+    """Load key=value pairs from .env file, stripping inline comments."""
     config = {}
     with open(env_file, 'r') as f:
         for line in f:
@@ -42,51 +50,53 @@ def load_env(env_file):
                 continue
             if '=' in line:
                 key, _, value = line.partition('=')
-                # Strip inline comments
                 value = value.split('#')[0].strip()
                 config[key.strip()] = value
     return config
 
 
 def find_project_root():
-    """Find the project root (directory containing idr2/)."""
+    """Find the repo root (the directory that contains idr2/)."""
     script_dir = Path(__file__).parent  # idr2/local_laptop/
     return script_dir.parent.parent     # repo root
 
 
 def setup_config():
-    """Load and validate configuration."""
+    """Load and validate configuration from idr2/.env."""
     project_root = find_project_root()
     idr2_dir = project_root / "idr2"
     env_file = idr2_dir / ".env"
 
     if not env_file.exists():
         print(f"ERROR: .env file not found at {env_file}")
-        print("Please copy example.env to .env and configure it first:")
-        print(f"  cd {idr2_dir}")
-        print(f"  cp example.env .env")
-        print(f"  nano .env")
+        print(f"  cp {idr2_dir}/example.env {env_file}")
+        print(f"  nano {env_file}")
         sys.exit(1)
 
     config = load_env(env_file)
 
-    # Expand ~ in paths
     download_dir = Path(config.get('DOWNLOAD_DIRECTORY', '')).expanduser()
-    snowsql_path = Path(config.get('SNOWSQL_PATH', '/Applications/SnowSQL.app/Contents/MacOS/snowsql'))
-    snowflake_config = config.get('SNOWFLAKE_CONFIG', 'cms_idr')
+    merged_dir   = Path(config.get('MERGED_DIRECTORY',
+                                   str(download_dir.parent / 'merged_csv_files'))).expanduser()
+    snowsql_path = Path(config.get('SNOWSQL_PATH',
+                                   '/Applications/SnowSQL.app/Contents/MacOS/snowsql'))
+    snowflake_config         = config.get('SNOWFLAKE_CONFIG', 'cms_idr')
+    s3_destination           = config.get('S3_BUCKET', '')     # e.g. s3://my-bucket/idr_exports/
     polling_interval_minutes = int(config.get('POLLING_INTERVAL_MINUTES', 5))
-    quit_after_hours = int(config.get('QUIT_AFTER_HOURS', 2))
+    quit_after_hours         = int(config.get('QUIT_AFTER_HOURS', 2))
 
     return {
-        'project_root': project_root,
-        'idr2_dir': idr2_dir,
-        'download_dir': download_dir,
-        'snowsql_path': snowsql_path,
-        'snowflake_config': snowflake_config,
+        'project_root':             project_root,
+        'idr2_dir':                 idr2_dir,
+        'download_dir':             download_dir,
+        'merged_dir':               merged_dir,
+        'snowsql_path':             snowsql_path,
+        'snowflake_config':         snowflake_config,
+        's3_destination':           s3_destination,
         'polling_interval_minutes': polling_interval_minutes,
         'polling_interval_seconds': polling_interval_minutes * 60,
-        'quit_after_seconds': quit_after_hours * 3600,
-        'quit_after_hours': quit_after_hours,
+        'quit_after_seconds':       quit_after_hours * 3600,
+        'quit_after_hours':         quit_after_hours,
     }
 
 
@@ -94,284 +104,442 @@ def setup_config():
 # LOGGING
 # ============================================================================
 
-log_file = None
+_log_file = None
 
 
 def log(message):
-    """Print with timestamp and write to log file."""
+    """Print with timestamp and append to log file."""
     timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     line = f"[{timestamp}] {message}"
     print(line)
-    if log_file:
-        with open(log_file, 'a') as f:
+    if _log_file:
+        with open(_log_file, 'a') as f:
             f.write(line + '\n')
 
 
 # ============================================================================
-# SNOWSQL OPERATIONS
+# SNOWSQL HELPERS
 # ============================================================================
 
 def run_snowsql(snowsql_path, snowflake_config, query):
-    """
-    Run a single snowsql command. Returns (success, output).
-    One authentication per call.
-    """
+    """Run one snowsql command. Returns (success, stdout+stderr)."""
     cmd = [str(snowsql_path), '-c', snowflake_config, '-q', query]
-    result = subprocess.run(
-        cmd,
-        capture_output=True,
-        text=True
-    )
+    result = subprocess.run(cmd, capture_output=True, text=True)
     return result.returncode == 0, result.stdout + result.stderr
 
 
 def list_stage_files(snowsql_path, snowflake_config):
-    """
-    List CSV files in Snowflake user stage. Returns list of filenames.
-    One snowsql authentication.
-    """
-    success, output = run_snowsql(snowsql_path, snowflake_config, "LIST @~/ PATTERN='.*\\.csv';")
+    """Return list of CSV filenames currently in the user stage @~/."""
+    success, output = run_snowsql(
+        snowsql_path, snowflake_config,
+        "LIST @~/ PATTERN='.*\\.csv';"
+    )
     if not success:
-        log(f"  Warning: LIST command failed")
+        log("  Warning: LIST @~/ failed")
         return []
-
     files = []
     for line in output.splitlines():
         if '.csv' in line:
-            # First column is the filename
             parts = line.split()
             if parts:
                 files.append(parts[0])
     return files
 
 
-def download_all_files(snowsql_path, snowflake_config, download_dir):
-    """
-    Download ALL csv files from stage at once.
-    One snowsql authentication (like original download_and_merge_all_snowflake_csv.sh).
-    """
-    log("Downloading all CSV files from stage...")
+def download_stage_files(snowsql_path, snowflake_config, download_dir):
+    """GET all CSV files from @~/ into download_dir. Returns True on success."""
+    log("  Downloading CSV parts from Snowflake stage...")
     original_dir = os.getcwd()
     os.chdir(str(download_dir))
-
     try:
         success, output = run_snowsql(
             snowsql_path, snowflake_config,
             "GET @~/ file://. PATTERN='.*.csv';"
         )
         if success:
-            log("✓ Download complete")
+            log("  ✓ Download complete")
             return True
-        else:
-            log(f"✗ Failed to download files from stage")
-            log(f"  Output: {output[:300]}")
-            return False
+        log(f"  ✗ GET failed: {output[:300]}")
+        return False
     finally:
         os.chdir(original_dir)
 
 
-def remove_all_stage_files(snowsql_path, snowflake_config):
-    """
-    Remove ALL csv files from stage at once.
-    One snowsql authentication.
-    """
-    log("Removing downloaded files from stage...")
+def remove_stage_files(snowsql_path, snowflake_config):
+    """REMOVE all CSV files from @~/. Returns True on success."""
+    log("  Removing files from Snowflake stage...")
     success, output = run_snowsql(
         snowsql_path, snowflake_config,
         "REMOVE @~/ PATTERN='.*.csv';"
     )
     if success:
-        log("✓ Stage cleared")
+        log("  ✓ Stage cleared — Snowflake will export the next table")
         return True
-    else:
-        log(f"✗ Failed to clear stage")
-        log(f"  Output: {output[:300]}")
-        return False
+    log(f"  ✗ REMOVE failed: {output[:300]}")
+    return False
 
 
 # ============================================================================
-# CSV MERGE
+# MERGE  (calls misc_scripts/snowflake_csv_merge.py)
 # ============================================================================
 
-def merge_csv_files(project_root, download_dir):
-    """Run the snowflake_csv_merge.py script to merge downloaded CSVs."""
+def merge_parts(project_root, download_dir, merged_dir):
+    """
+    Merge part files in download_dir into single CSVs in merged_dir.
+    Returns list of Path objects for the newly created merged files,
+    or an empty list on failure.
+    """
     merge_script = project_root / "misc_scripts" / "snowflake_csv_merge.py"
-    output_dir = download_dir.parent
-
     if not merge_script.exists():
-        log(f"⚠ Merge script not found: {merge_script}")
-        return False
+        log(f"  ✗ Merge script not found: {merge_script}")
+        return []
 
-    log(f"Running CSV merge: {merge_script}")
+    merged_dir.mkdir(parents=True, exist_ok=True)
+
+    # Snapshot what's already in merged_dir before running
+    before = set(merged_dir.glob("*.csv"))
+
+    log(f"  Merging parts → {merged_dir} ...")
     result = subprocess.run(
-        [sys.executable, str(merge_script), str(download_dir), '--output-dir', str(output_dir)],
+        [sys.executable, str(merge_script),
+         str(download_dir), '--output-dir', str(merged_dir)],
         capture_output=False
     )
-    return result.returncode == 0
+
+    if result.returncode != 0:
+        log("  ✗ Merge script returned non-zero exit code")
+        return []
+
+    # New files = whatever appeared since before
+    after = set(merged_dir.glob("*.csv"))
+    new_files = sorted(after - before)
+
+    if not new_files:
+        log("  ⚠ Merge script ran but produced no new files")
+        return []
+
+    for f in new_files:
+        size_mb = f.stat().st_size / (1024 * 1024)
+        log(f"  ✓ Merged: {f.name}  ({size_mb:.1f} MB)")
+    return new_files
 
 
 # ============================================================================
-# MAIN POLLING LOOP
+# S3 UPLOAD + VALIDATION
+# ============================================================================
+
+def compute_local_md5(filepath):
+    """Return the hex MD5 digest of a local file."""
+    h = hashlib.md5()
+    with open(filepath, 'rb') as f:
+        for chunk in iter(lambda: f.read(65536), b''):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def upload_to_s3(local_file, s3_destination):
+    """
+    Upload local_file to s3_destination using the AWS CLI.
+    Prints file name, size, destination, and upload result.
+    Returns True on success.
+    """
+    if not s3_destination:
+        log("  ⚠ S3_BUCKET not configured in .env — skipping upload")
+        return True  # treat as non-fatal so local cleanup still runs
+
+    dest = s3_destination.rstrip('/') + '/' + local_file.name
+    size_mb = local_file.stat().st_size / (1024 * 1024)
+
+    log(f"  Upload source : {local_file}")
+    log(f"  Upload size   : {size_mb:.2f} MB  ({local_file.stat().st_size:,} bytes)")
+    log(f"  Upload dest   : {dest}")
+    log(f"  Uploading...")
+
+    result = subprocess.run(
+        ['aws', 's3', 'cp', str(local_file), dest],
+        capture_output=False
+    )
+    if result.returncode == 0:
+        log(f"  ✓ Upload complete → {dest}")
+        return True
+    log(f"  ✗ Upload FAILED for {local_file.name}  (aws exit code {result.returncode})")
+    return False
+
+
+def validate_s3_upload(local_file, s3_destination):
+    """
+    Validate the S3 upload by comparing:
+      - file size  (aws s3 ls)
+      - MD5 digest (aws s3api head-object ETag vs local MD5)
+
+    Prints each check with pass/fail. Returns True only if both match.
+    Note: S3 ETags for multipart uploads are NOT a plain MD5; in that case
+    only the size check applies and the MD5 step is skipped with a warning.
+    """
+    if not s3_destination:
+        return True  # no S3 configured — nothing to validate
+
+    dest = s3_destination.rstrip('/') + '/' + local_file.name
+    log(f"  Validating : {dest}")
+
+    # ── Size check ────────────────────────────────────────────────────────────
+    ls_result = subprocess.run(
+        ['aws', 's3', 'ls', dest],
+        capture_output=True, text=True
+    )
+    if ls_result.returncode != 0 or not ls_result.stdout.strip():
+        log(f"  ✗ SIZE CHECK FAILED — file not found in S3")
+        return False
+
+    local_size = local_file.stat().st_size
+    ls_parts = ls_result.stdout.strip().split()
+    try:
+        s3_size = int(ls_parts[2])
+    except (IndexError, ValueError):
+        log(f"  ⚠ Could not parse 'aws s3 ls' output: {ls_result.stdout.strip()}")
+        s3_size = None
+
+    if s3_size is not None:
+        if s3_size == local_size:
+            log(f"  ✓ SIZE  match : {s3_size:,} bytes")
+        else:
+            log(f"  ✗ SIZE MISMATCH : local={local_size:,} bytes  S3={s3_size:,} bytes")
+            return False
+
+    # ── MD5 / ETag check ──────────────────────────────────────────────────────
+    # Parse bucket and key from the destination URI
+    # dest looks like:  s3://bucket-name/prefix/filename.csv
+    without_scheme = dest[len('s3://'):]
+    bucket, _, key = without_scheme.partition('/')
+
+    etag_result = subprocess.run(
+        ['aws', 's3api', 'head-object',
+         '--bucket', bucket,
+         '--key', key,
+         '--query', 'ETag',
+         '--output', 'text'],
+        capture_output=True, text=True
+    )
+
+    if etag_result.returncode != 0:
+        log(f"  ⚠ MD5  check  : could not retrieve ETag from S3 — skipping")
+    else:
+        etag = etag_result.stdout.strip().strip('"')
+        if '-' in etag:
+            # Multipart upload — ETag is not a plain MD5
+            log(f"  ⚠ MD5  check  : S3 ETag '{etag}' is a multipart checksum — "
+                f"size match is sufficient")
+        else:
+            local_md5 = compute_local_md5(local_file)
+            log(f"  Local MD5     : {local_md5}")
+            log(f"  S3 ETag (MD5) : {etag}")
+            if local_md5 == etag:
+                log(f"  ✓ MD5   match : checksums identical")
+            else:
+                log(f"  ✗ MD5 MISMATCH : local={local_md5}  S3={etag}")
+                return False
+
+    log(f"  ✓ Validation passed for {local_file.name}")
+    return True
+
+
+# ============================================================================
+# PER-BATCH PIPELINE
+# ============================================================================
+
+def run_pipeline(project_root, download_dir, merged_dir,
+                 snowsql_path, snowflake_config, s3_destination,
+                 remove_from_stage=True):
+    """
+    Run the full pipeline for one batch of downloaded part files:
+      merge → upload S3 → validate → clean local → (optionally) remove stage
+
+    Returns True if everything succeeded.
+    """
+    log("--- Pipeline: MERGE ---")
+    merged_files = merge_parts(project_root, download_dir, merged_dir)
+    if not merged_files:
+        log("  ✗ Pipeline aborted: merge produced no output files")
+        return False
+
+    all_ok = True
+    for merged_file in merged_files:
+        log(f"--- Pipeline: UPLOAD  {merged_file.name} ---")
+        if not upload_to_s3(merged_file, s3_destination):
+            log(f"  ✗ Pipeline aborted at upload for {merged_file.name}")
+            all_ok = False
+            break
+
+        log(f"--- Pipeline: VALIDATE {merged_file.name} ---")
+        if not validate_s3_upload(merged_file, s3_destination):
+            log(f"  ✗ Pipeline aborted at validation for {merged_file.name}")
+            all_ok = False
+            break
+
+        log(f"--- Pipeline: CLEAN LOCAL {merged_file.name} ---")
+        size_mb = merged_file.stat().st_size / (1024 * 1024)
+        merged_file.unlink()
+        log(f"  ✓ Deleted merged file : {merged_file.name}  ({size_mb:.2f} MB)")
+        log(f"    disk space reclaimed : {size_mb:.2f} MB")
+
+    if not all_ok:
+        return False
+
+    # Delete all part files from download_dir
+    part_files = sorted(download_dir.glob("*.csv"))
+    log(f"  Cleaning up {len(part_files)} part file(s) from download directory:")
+    for f in part_files:
+        size_mb = f.stat().st_size / (1024 * 1024)
+        f.unlink()
+        log(f"    deleted part: {f.name}  ({size_mb:.2f} MB)")
+    log("  ✓ Download directory empty")
+
+    # Signal Snowflake to export the next table
+    if remove_from_stage:
+        log("--- Pipeline: REMOVE FROM STAGE ---")
+        remove_stage_files(snowsql_path, snowflake_config)
+
+    log("--- Pipeline: COMPLETE ---")
+    return True
+
+
+# ============================================================================
+# MAIN
 # ============================================================================
 
 def format_elapsed(seconds):
-    """Format seconds as Xh Ym."""
     h = int(seconds // 3600)
     m = int((seconds % 3600) // 60)
     return f"{h}h {m}m"
 
 
 def main():
-    global log_file
+    global _log_file
 
-    # Load config
     config = setup_config()
-    download_dir = config['download_dir']
-    snowsql_path = config['snowsql_path']
-    snowflake_config = config['snowflake_config']
+    download_dir             = config['download_dir']
+    merged_dir               = config['merged_dir']
+    snowsql_path             = config['snowsql_path']
+    snowflake_config         = config['snowflake_config']
+    s3_destination           = config['s3_destination']
     polling_interval_seconds = config['polling_interval_seconds']
     polling_interval_minutes = config['polling_interval_minutes']
-    quit_after_seconds = config['quit_after_seconds']
-    quit_after_hours = config['quit_after_hours']
-    project_root = config['project_root']
+    quit_after_seconds       = config['quit_after_seconds']
+    quit_after_hours         = config['quit_after_hours']
+    project_root             = config['project_root']
 
-    # Validate download directory
+    # Validate paths
     if not download_dir.exists():
-        print(f"ERROR: Download directory does not exist: {download_dir}")
-        print("Please create it first:")
+        print(f"ERROR: DOWNLOAD_DIRECTORY does not exist: {download_dir}")
         print(f"  mkdir -p '{download_dir}'")
         sys.exit(1)
-
-    # Validate snowsql
     if not snowsql_path.exists():
         print(f"ERROR: snowsql not found at {snowsql_path}")
-        print(f"Please update SNOWSQL_PATH in {config['idr2_dir']}/.env")
+        print(f"  Update SNOWSQL_PATH in {config['idr2_dir']}/.env")
         sys.exit(1)
 
-    # Set up log file
-    log_file = download_dir / "download_progress.log"
+    _log_file = download_dir / "download_progress.log"
 
-    log("====== STARTING DOWNLOAD & MERGE PROCESS ======")
-    log(f"Configuration loaded from: {config['idr2_dir']}/.env")
-    log(f"Download directory: {download_dir}")
-    log(f"Polling interval: {polling_interval_minutes} minutes")
-    log(f"Timeout: {quit_after_hours} hours")
-    log(f"Snowflake config: {snowflake_config}")
-    log(f"snowsql found at: {snowsql_path}")
+    log("=" * 60)
+    log("STARTING: Snowflake → Laptop → S3 Pipeline")
+    log("=" * 60)
+    log(f"Download dir  : {download_dir}")
+    log(f"Merged dir    : {merged_dir}")
+    log(f"S3 destination: {s3_destination or '(not configured)'}")
+    log(f"Polling       : every {polling_interval_minutes} min")
+    log(f"Timeout       : {quit_after_hours} h with no activity")
 
-    # ── Resume detection ──────────────────────────────────────────────────────
-    # If there are already CSV files in the download dir (from a previous
-    # interrupted run), merge and upload them NOW before entering the poll loop.
-    existing_csvs = list(download_dir.glob("*.csv"))
-    if existing_csvs:
-        log(f"====== RESUMING: found {len(existing_csvs)} pre-existing CSV file(s) ======")
-        log("Merging and uploading leftover files from previous run...")
-        if merge_csv_files(project_root, download_dir):
-            log("✓ Pre-existing files merged successfully")
-            # Clear the merged parts so the download dir is clean
-            for f in download_dir.glob("*.csv"):
-                f.unlink()
-            log("✓ Download directory cleared — ready to continue polling")
-        else:
-            log("✗ Merge of pre-existing files failed — check the merge script")
-            log("  Files left in place; continuing to poll anyway")
+    # ──────────────────────────────────────────────────────────────────────────
+    # RESUME: process any leftover parts from a previous interrupted run
+    # ──────────────────────────────────────────────────────────────────────────
+    existing_parts = list(download_dir.glob("*.csv"))
+    if existing_parts:
+        log("=" * 60)
+        log(f"RESUME: found {len(existing_parts)} pre-existing part file(s)")
+        log("Running pipeline on leftover files before entering poll loop...")
+        # Do NOT remove from stage for the resume case — the stage was already
+        # cleared (or never had files). We just need to process the local parts.
+        run_pipeline(project_root, download_dir, merged_dir,
+                     snowsql_path, snowflake_config, s3_destination,
+                     remove_from_stage=False)
+        log("Resume processing complete. Entering poll loop.")
     else:
-        log("No pre-existing CSV files found — starting fresh")
-    # ─────────────────────────────────────────────────────────────────────────
+        log("No pre-existing parts found — starting fresh poll loop.")
+    # ──────────────────────────────────────────────────────────────────────────
 
-    # Timing
     start_time = time.time()
     last_activity_time = start_time
-    first_file_time = None
+    tables_processed = 0
 
-    log("Starting polling loop...")
+    log("=" * 60)
+    log("POLLING LOOP STARTED")
+    log("=" * 60)
 
     while True:
         now = time.time()
-        elapsed_total = now - start_time
+        elapsed_total          = now - start_time
         elapsed_since_activity = now - last_activity_time
 
-        # Check timeout
         if elapsed_since_activity > quit_after_seconds:
-            log("====== TIMEOUT REACHED ======")
-            log(f"No download activity for {quit_after_hours} hours")
+            log("=" * 60)
+            log(f"TIMEOUT: no activity for {quit_after_hours} h")
             log(f"Total elapsed: {format_elapsed(elapsed_total)}")
-            log("Stopping polling loop")
+            log(f"Tables processed: {tables_processed}")
+            log("=" * 60)
             break
 
-        log(f"Checking Snowflake stage "
-            f"({format_elapsed(elapsed_total)} elapsed, "
-            f"{format_elapsed(elapsed_since_activity)} since last activity)...")
+        log(f"Checking stage "
+            f"(elapsed={format_elapsed(elapsed_total)}, "
+            f"since activity={format_elapsed(elapsed_since_activity)})...")
 
-        # LIST - one snowsql auth
         stage_files = list_stage_files(snowsql_path, snowflake_config)
 
         if stage_files:
             log(f"Found {len(stage_files)} file(s) in stage")
 
-            # GET all - one snowsql auth
-            if download_all_files(snowsql_path, snowflake_config, download_dir):
-                # REMOVE all - one snowsql auth
-                remove_all_stage_files(snowsql_path, snowflake_config)
+            # Step 1: Download
+            if download_stage_files(snowsql_path, snowflake_config, download_dir):
                 last_activity_time = time.time()
+                tables_processed += 1
 
-                if first_file_time is None:
-                    first_file_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                    log(f"First file batch downloaded at: {first_file_time}")
-        else:
-            log("No new files found in stage")
-
-            if first_file_time is not None:
-                downloaded = list(download_dir.glob("*.csv"))
-                if downloaded:
-                    log(f"✓ All files downloaded ({len(downloaded)} total)")
+                # Steps 2-5: merge → S3 → validate → clean local → remove stage
+                log(f"[Table {tables_processed}] Running full pipeline...")
+                ok = run_pipeline(
+                    project_root, download_dir, merged_dir,
+                    snowsql_path, snowflake_config, s3_destination,
+                    remove_from_stage=True
+                )
+                if ok:
+                    log(f"[Table {tables_processed}] ✓ Pipeline complete — "
+                        f"laptop disk space reclaimed, Snowflake signalled")
                     last_activity_time = time.time()
+                else:
+                    log(f"[Table {tables_processed}] ✗ Pipeline failed — "
+                        f"check errors above. Files left in {download_dir}")
+                    log("  Stopping to avoid data loss.")
+                    break
+            else:
+                log("  ✗ Download failed — will retry next poll")
+        else:
+            log("  No files in stage — waiting for Snowflake to export next table...")
 
-        log(f"Waiting {polling_interval_minutes} minutes before next check...")
-
-        # Sleep in 60-second increments with heartbeat
+        log(f"Sleeping {polling_interval_minutes} min until next check...")
         elapsed_wait = 0
         while elapsed_wait < polling_interval_seconds:
             time.sleep(60)
             elapsed_wait += 60
             remaining = (polling_interval_seconds - elapsed_wait) // 60
             if elapsed_wait < polling_interval_seconds:
-                log(f"  ... still waiting ({remaining:.0f} min until next check)")
+                log(f"  ... {remaining:.0f} min until next check")
 
-    # ============================================================================
-    # MERGE DOWNLOADED FILES
-    # ============================================================================
-
-    log("====== MERGING CSV FILES ======")
-
-    downloaded_files = list(download_dir.glob("*.csv"))
-
-    if not downloaded_files:
-        log("⚠ WARNING: No CSV files found to merge")
-        log("Check that Snowflake exports are running correctly")
-    else:
-        log(f"Found {len(downloaded_files)} files to merge")
-
-        if merge_csv_files(project_root, download_dir):
-            log("✓ CSV merge completed successfully")
-        else:
-            log("✗ CSV merge failed")
-
-    # Final summary
     total_elapsed = time.time() - start_time
-    log("====== PROCESS COMPLETE ======")
-    log(f"Total duration: {format_elapsed(total_elapsed)}")
-    log(f"Downloaded: {len(downloaded_files)} files")
-    log(f"Output directory: {download_dir}")
-    log(f"Log file: {log_file}")
-    log("")
-    log("To manually check remaining files in Snowflake stage:")
-    log(f"  snowsql -c {snowflake_config} -q \"LIST @~/ PATTERN='*.csv';\"")
-    log("")
-    log("====== DONE ======")
-
-    # Beep
-    print('\a', end='', flush=True)
+    log("=" * 60)
+    log("DONE")
+    log(f"Total duration   : {format_elapsed(total_elapsed)}")
+    log(f"Tables processed : {tables_processed}")
+    log(f"Log file         : {_log_file}")
+    log("=" * 60)
+    print('\a', end='', flush=True)   # terminal bell
 
 
 if __name__ == "__main__":

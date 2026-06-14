@@ -27,11 +27,14 @@ idr2/
 
 ## How It Works
 
-The system uses file presence/absence as a synchronization signal:
+The system uses file presence/absence as a synchronization signal and processes **one table at a time** to keep laptop disk usage minimal:
 
-1. **Snowflake** exports one table at a time to `@~/` (the Snowflake user stage)
-2. **Your laptop** detects the new file, downloads it, merges part files, uploads to S3, then removes it from the stage
-3. **Snowflake** sees the file is gone → exports the next table
+```
+Snowflake exports table → laptop downloads parts → merge → upload S3 → validate
+→ delete local files → remove from stage → Snowflake exports next table → ...
+```
+
+The laptop never holds more than one table's worth of data at any moment.
 
 Steps 4 and 5 below run **simultaneously in two separate terminals/windows**.
 
@@ -51,12 +54,19 @@ Key settings in `.env`:
 
 ```ini
 DOWNLOAD_DIRECTORY=~/cms_data_downloads_possible_pii/idr_data/unmerged_csv_files
+MERGED_DIRECTORY=~/cms_data_downloads_possible_pii/idr_data/merged_csv_files
 SNOWFLAKE_CONFIG=cms_idr
 SNOWSQL_PATH=/Applications/SnowSQL.app/Contents/MacOS/snowsql
 S3_BUCKET=s3://your-bucket-name/idr_exports/
 POLLING_INTERVAL_MINUTES=5
 QUIT_AFTER_HOURS=2
 ```
+
+| Variable | Purpose |
+|---|---|
+| `DOWNLOAD_DIRECTORY` | Temporary landing zone for Snowflake part files (emptied after each table) |
+| `MERGED_DIRECTORY` | Where merged CSVs are written before upload (emptied after each table) |
+| `S3_BUCKET` | Full `s3://bucket/prefix/` destination for merged files |
 
 ---
 
@@ -100,14 +110,16 @@ Reads the metadata and writes `idr2/snowflake/cell2_snowflake_export_notebook.py
 python3 idr2/local_laptop/step4_download_merge_upload.py
 ```
 
-This will:
-- Poll the Snowflake stage every 5 minutes for new CSV files
-- Download all part files
-- Merge them into a single CSV
-- Upload the merged CSV to S3
-- Verify MD5 checksum and row count
-- Remove the parts from the Snowflake stage (signals Snowflake to export the next table)
-- Stop after 2 hours of no activity
+For **each table** this does the full pipeline in sequence:
+1. Download part files from `@~/` into `DOWNLOAD_DIRECTORY`
+2. Merge parts → single CSV in `MERGED_DIRECTORY`
+3. Upload merged CSV to `S3_BUCKET`
+4. Validate the S3 upload (size check)
+5. Delete merged file from `MERGED_DIRECTORY`
+6. Delete part files from `DOWNLOAD_DIRECTORY`
+7. Remove parts from Snowflake stage → signals Snowflake to export the next table
+
+The laptop holds at most **one table** of data at any time. Stops after `QUIT_AFTER_HOURS` of no new activity.
 
 ### Step 5 — Terminal 2 (Snowflake notebook)
 
