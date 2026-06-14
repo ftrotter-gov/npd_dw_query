@@ -87,23 +87,49 @@ def find_table_metadata(table_name, cached_metadata):
 
 
 def build_select_from_columns(full_table_name, columns):
-    """Build SELECT statement with explicit columns."""
+    """Build SELECT statement with explicit column names and inline comments."""
     if not columns:
         return f"SELECT * FROM {full_table_name}"
     
-    column_names = [col.get('column_name') for col in columns if col.get('column_name')]
+    # Build each column line with inline comment (type | nullable | description)
+    column_lines = []
+    for col in columns:
+        col_name = col.get('column_name')
+        if not col_name:
+            continue
+        
+        # Build inline comment
+        type_desc = col.get('type_description', col.get('data_type', ''))
+        nullable = col.get('is_nullable', '')
+        nullable_str = "NOT NULL" if nullable == "NO" else "NULL"
+        comment = col.get('comment', '')
+        
+        if comment:
+            # Truncate comment to avoid excessively long lines
+            comment_text = comment.replace('\n', ' ').strip()
+            if len(comment_text) > 200:
+                comment_text = comment_text[:200] + '...'
+            inline_comment = f" -- {type_desc} | {nullable_str} | {comment_text}"
+        else:
+            inline_comment = f" -- {type_desc} | {nullable_str}"
+        
+        column_lines.append(f"                {col_name},{inline_comment}")
     
-    if not column_names:
+    if not column_lines:
         return f"SELECT * FROM {full_table_name}"
     
-    column_str = ",\n                ".join(column_names)
-    return f"""SELECT
-                {column_str}
-            FROM {full_table_name}"""
+    # Last column has no trailing comma - remove it from last line
+    last = column_lines[-1]
+    comma_idx = last.index(',')
+    column_lines[-1] = last[:comma_idx] + last[comma_idx+1:]
+    
+    columns_str = "\n".join(column_lines)
+    
+    return f"SELECT\n{columns_str}\n            FROM {full_table_name}"
 
 
 def generate_table_metadata(tables, cached_metadata):
-    """Generate metadata for all tables."""
+    """Generate metadata for all tables - only table name and SQL."""
     metadata_tables = []
     
     for full_name in tables:
@@ -115,27 +141,36 @@ def generate_table_metadata(tables, cached_metadata):
             
             if cached_table and 'columns' in cached_table:
                 columns = cached_table['columns']
-                select_query = build_select_from_columns(full_name, columns)
+                
+                # Use the database/schema FROM THE CACHE - it has the real Snowflake path
+                # The CSV may have the wrong schema name
+                cache_db = cached_table.get('database', table_info['database'])
+                cache_schema = cached_table.get('schema', table_info['schema'])
+                cache_table = cached_table.get('table_name', table_info['table'])
+                actual_full_name = f"{cache_db}.{cache_schema}.{cache_table}"
+                
+                if actual_full_name != full_name:
+                    print(f"    (schema corrected: {full_name} → {actual_full_name})")
+                
+                select_query = build_select_from_columns(actual_full_name, columns)
             else:
+                actual_full_name = full_name
                 select_query = f"SELECT * FROM {full_name}"
-                columns = []
+                print(f"  ⚠ No cached metadata found for {table_info['table']} - using SELECT *")
             
             # Generate file stub
             file_stub = f"{table_info['table'].lower()}_idr_export"
             
+            # Only store what we need - table name, file stub, version, and SQL
             table_meta = {
-                'database': table_info['database'],
-                'schema': table_info['schema'],
-                'table': table_info['table'],
-                'full_table_name': full_name,
-                'columns': columns,
+                'full_table_name': actual_full_name,
                 'file_name_stub': file_stub,
                 'version_number': 'v01',
                 'select_query': select_query
             }
             
             metadata_tables.append(table_meta)
-            print(f"  ✓ {full_name}")
+            print(f"  ✓ {actual_full_name}")
         
         except Exception as e:
             print(f"  ✗ Error processing {full_name}: {e}")
@@ -143,93 +178,107 @@ def generate_table_metadata(tables, cached_metadata):
     return metadata_tables
 
 
-def generate_notebook_cell_2_script(metadata_tables):
-    """Generate the complete Snowflake notebook cell 2 script."""
+def write_cell2_script(output_file, metadata_tables):
+    """Write the Cell 2 script directly to file with actual newlines in SQL."""
     
-    # Convert metadata to JSON
-    metadata_json = {
-        "generated": datetime.now().isoformat(),
-        "source": "Generated from list_of_tables_to_download.csv and cached metadata",
-        "tables": metadata_tables
-    }
+    generated = datetime.now().isoformat()
     
-    metadata_json_str = json.dumps(metadata_json, indent=2)
-    
-    script = f'''"""
-Snowflake Export Main Script - Cell 2
-
-This script was auto-generated with all metadata embedded.
-It requires the classes from Cell 1 (snowflake_export_classes.py).
-
-Just run this cell to start the export loop.
-"""
-
-import json
-from datetime import datetime
-
-# ============================================================================
-# EMBEDDED METADATA
-# ============================================================================
-
-METADATA_JSON = {metadata_json_str}
-
-
-# ============================================================================
-# CONFIGURATION
-# ============================================================================
-
-POLLING_INTERVAL_MINUTES = 5      # Check for downloads every 5 minutes
-QUIT_AFTER_HOURS = 2              # Stop after 2 hours with no activity
-
-
-# ============================================================================
-# MAIN EXECUTION
-# ============================================================================
-
-def main():
-    """Main execution function - loads metadata and starts export loop."""
-    
-    try:
-        # Get active Snowflake session
-        session = get_active_session()  # noqa: F821
+    with open(output_file, 'w') as f:
+        # Header
+        f.write('"""\n')
+        f.write('Snowflake Export Main Script - Cell 2\n')
+        f.write('\n')
+        f.write('This script was auto-generated with all metadata embedded.\n')
+        f.write('It requires the classes from Cell 1 (snowflake_export_classes.py).\n')
+        f.write('\n')
+        f.write('Just run this cell to start the export loop.\n')
+        f.write('"""\n')
+        f.write('\n')
+        f.write('from datetime import datetime\n')
+        f.write('\n')
+        f.write('# ============================================================================\n')
+        f.write('# EMBEDDED METADATA\n')
+        f.write('# ============================================================================\n')
+        f.write('\n')
+        f.write('METADATA_JSON = {\n')
+        f.write(f'    "generated": "{generated}",\n')
+        f.write('    "source": "Generated from list_of_tables_to_download.csv and cached metadata",\n')
+        f.write('    "tables": [\n')
         
-        print("Snowflake session acquired")
-        print(f"\\nMetadata prepared for {{len(METADATA_JSON.get('tables', []))}} tables")
-        print(f"Generated: {{METADATA_JSON.get('generated', 'Unknown')}}")
-        print(f"Source: {{METADATA_JSON.get('source', 'Unknown')}}")
+        # Write each table as a dict with triple-quoted SQL
+        for i, t in enumerate(metadata_tables):
+            is_last = (i == len(metadata_tables) - 1)
+            comma = "" if is_last else ","
+            
+            f.write('        {\n')
+            f.write(f'            "full_table_name": "{t["full_table_name"]}",\n')
+            f.write(f'            "file_name_stub": "{t["file_name_stub"]}",\n')
+            f.write(f'            "version_number": "{t["version_number"]}",\n')
+            
+            # Write select_query with actual newlines using triple-quote string
+            f.write('            "select_query": """\n')
+            f.write(t['select_query'])
+            f.write('\n"""\n')
+            
+            f.write(f'        }}{comma}\n')
         
-        # Print configuration
-        print("\\n" + "="*60)
-        print("EXPORT LOOP CONFIGURATION")
-        print("="*60)
-        print(f"Polling interval: {{POLLING_INTERVAL_MINUTES}} minutes")
-        print(f"Timeout: {{QUIT_AFTER_HOURS}} hours with no activity")
-        print(f"Total tables: {{len(METADATA_JSON.get('tables', []))}}")
-        print("="*60)
+        f.write('    ]\n')
+        f.write('}\n')
+        f.write('\n')
         
-        # Initialize and run the export loop
-        metadata = ExportMetadata(METADATA_JSON)
-        loop = ExportLoop(
-            session,
-            metadata,
-            POLLING_INTERVAL_MINUTES,
-            QUIT_AFTER_HOURS
-        )
-        loop.run()
-        
-        print("\\n✓ Export loop completed successfully!")
-        
-    except Exception as e:
-        print(f"\\n✗ Fatal error in export loop: {{str(e)}}")
-        print(f"Please check your configuration and try again")
-        raise
-
-
-# Call main() to start the export loop
-main()
-'''
-    
-    return script
+        # Configuration and main()
+        f.write('# ============================================================================\n')
+        f.write('# CONFIGURATION\n')
+        f.write('# ============================================================================\n')
+        f.write('\n')
+        f.write('POLLING_INTERVAL_MINUTES = 5      # Check for downloads every 5 minutes\n')
+        f.write('QUIT_AFTER_HOURS = 2              # Stop after 2 hours with no activity\n')
+        f.write('\n')
+        f.write('\n')
+        f.write('# ============================================================================\n')
+        f.write('# MAIN EXECUTION\n')
+        f.write('# ============================================================================\n')
+        f.write('\n')
+        f.write('def main():\n')
+        f.write('    """Main execution function - loads metadata and starts export loop."""\n')
+        f.write('\n')
+        f.write('    try:\n')
+        f.write('        # Get active Snowflake session\n')
+        f.write('        session = get_active_session()  # noqa: F821\n')
+        f.write('\n')
+        f.write('        print("Snowflake session acquired")\n')
+        f.write('        print(f"\\nMetadata prepared for {len(METADATA_JSON.get(\'tables\', []))} tables")\n')
+        f.write('        print(f"Generated: {METADATA_JSON.get(\'generated\', \'Unknown\')}")\n')
+        f.write('\n')
+        f.write('        # Print configuration\n')
+        f.write('        print("\\n" + "="*60)\n')
+        f.write('        print("EXPORT LOOP CONFIGURATION")\n')
+        f.write('        print("="*60)\n')
+        f.write('        print(f"Polling interval: {POLLING_INTERVAL_MINUTES} minutes")\n')
+        f.write('        print(f"Timeout: {QUIT_AFTER_HOURS} hours with no activity")\n')
+        f.write('        print(f"Total tables: {len(METADATA_JSON.get(\'tables\', []))}")\n')
+        f.write('        print("="*60)\n')
+        f.write('\n')
+        f.write('        # Initialize and run the export loop\n')
+        f.write('        metadata = ExportMetadata(METADATA_JSON)\n')
+        f.write('        loop = ExportLoop(\n')
+        f.write('            session,\n')
+        f.write('            metadata,\n')
+        f.write('            POLLING_INTERVAL_MINUTES,\n')
+        f.write('            QUIT_AFTER_HOURS\n')
+        f.write('        )\n')
+        f.write('        loop.run()\n')
+        f.write('\n')
+        f.write('        print("\\n✓ Export loop completed successfully!")\n')
+        f.write('\n')
+        f.write('    except Exception as e:\n')
+        f.write('        print(f"\\n✗ Fatal error in export loop: {str(e)}")\n')
+        f.write('        print(f"Please check your configuration and try again")\n')
+        f.write('        raise\n')
+        f.write('\n')
+        f.write('\n')
+        f.write('# Call main() to start the export loop\n')
+        f.write('main()\n')
 
 
 def main():
@@ -248,13 +297,9 @@ def main():
     metadata_tables = generate_table_metadata(tables, cached_metadata)
     print(f"  ✓ Generated metadata for {len(metadata_tables)} tables")
     
-    print(f"\n4. Generating Snowflake notebook cell 2 script...")
-    script = generate_notebook_cell_2_script(metadata_tables)
-    
-    # Write to file
+    print(f"\n4. Writing Snowflake notebook cell 2 script...")
     output_file = Path(__file__).parent / "snowflake_notebook_cell_2.py"
-    with open(output_file, 'w') as f:
-        f.write(script)
+    write_cell2_script(output_file, metadata_tables)
     
     print(f"\n✓ Script generated successfully!")
     print(f"  Output: {output_file}")

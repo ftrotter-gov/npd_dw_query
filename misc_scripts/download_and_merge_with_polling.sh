@@ -180,8 +180,16 @@ while true; do
     
     log "Waiting $POLLING_INTERVAL_MINUTES minutes before next check..."
     
-    # Sleep for polling interval, checking for interrupt
-    sleep "$POLLING_INTERVAL"
+    # Sleep in 60-second increments and print a heartbeat each minute
+    ELAPSED_WAIT=0
+    while [ $ELAPSED_WAIT -lt $POLLING_INTERVAL ]; do
+        sleep 60
+        ELAPSED_WAIT=$((ELAPSED_WAIT + 60))
+        REMAINING=$(( (POLLING_INTERVAL - ELAPSED_WAIT) / 60 ))
+        if [ $ELAPSED_WAIT -lt $POLLING_INTERVAL ]; then
+            log "  ... still waiting (${REMAINING} min until next check)"
+        fi
+    done
 done
 
 # Merge downloaded files
