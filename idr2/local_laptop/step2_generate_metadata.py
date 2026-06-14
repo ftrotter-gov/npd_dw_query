@@ -305,9 +305,9 @@ def main():
         # Get the directory where this script is located
         script_dir = Path(__file__).parent
         
-        # Use files in the same directory
-        csv_file = script_dir / "list_of_tables_to_download.csv"
-        output_file = script_dir / "export_metadata.json"
+        # step1_tables_to_export.csv lives one level up in idr2/
+        csv_file = script_dir.parent / "step1_tables_to_export.csv"
+        output_file = script_dir.parent / "export_metadata.json"
         
         print("=" * 60)
         print("Snowflake IDR Metadata Generator")

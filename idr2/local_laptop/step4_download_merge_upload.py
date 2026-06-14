@@ -29,9 +29,11 @@ Resume / restart:
 
 import hashlib
 import os
+import re
 import sys
 import time
 import subprocess
+from collections import defaultdict
 from pathlib import Path
 from datetime import datetime
 
@@ -183,45 +185,86 @@ def remove_stage_files(snowsql_path, snowflake_config):
 # MERGE  (calls misc_scripts/snowflake_csv_merge.py)
 # ============================================================================
 
-def merge_parts(project_root, download_dir, merged_dir):
+def identify_groups(directory):
     """
-    Merge part files in download_dir into single CSVs in merged_dir.
-    Returns list of Path objects for the newly created merged files,
-    or an empty list on failure.
+    Scan directory for CSV part files and group them by table root name.
+    Uses the same regex as snowflake_csv_merge.py:
+        foo_0_0_0.csv, foo_0_0_1.csv  →  group 'foo'
+
+    Returns dict: { root_name: [Path, ...] }
+    Skip the download_progress.log file.
+    """
+    groups = defaultdict(list)
+    for f in sorted(directory.glob("*.csv")) + sorted(directory.glob("*.csv.gz")):
+        if f.name == "download_progress.log":
+            continue
+        base = f.name
+        if base.endswith('.gz'):
+            base = base[:-3]
+        if base.endswith('.csv'):
+            base = base[:-4]
+        root = re.sub(r'(_\d+_\d+_\d+)$', '', base)
+        if root.endswith('.csv'):
+            root = root[:-4]
+        groups[root].append(f)
+    return dict(groups)
+
+
+def merge_one_group(project_root, part_files, merged_dir):
+    """
+    Merge a single list of part files into one CSV in merged_dir.
+
+    Strategy:
+      1. Move part files into an isolated temp subdirectory (instantaneous rename,
+         no data copy, no extra disk space).
+      2. Call snowflake_csv_merge.py on that temp dir.
+      3. Return the list of newly created merged files.
+         The temp dir and its part files are NOT deleted here — caller is
+         responsible for cleanup so parts survive if something goes wrong.
+
+    Returns (merged_files, temp_dir) — temp_dir must be cleaned up by caller.
     """
     merge_script = project_root / "misc_scripts" / "snowflake_csv_merge.py"
     if not merge_script.exists():
         log(f"  ✗ Merge script not found: {merge_script}")
-        return []
+        return [], None
 
     merged_dir.mkdir(parents=True, exist_ok=True)
 
-    # Snapshot what's already in merged_dir before running
+    # Create an isolated temp dir inside the same directory as the part files
+    # so rename() stays on the same filesystem (zero disk cost).
+    parent_dir = part_files[0].parent
+    temp_dir = parent_dir / f"_merge_tmp_{part_files[0].name[:40]}"
+    temp_dir.mkdir(exist_ok=True)
+
+    log(f"  Moving {len(part_files)} part file(s) into temp dir for isolated merge...")
+    for f in part_files:
+        f.rename(temp_dir / f.name)
+
     before = set(merged_dir.glob("*.csv"))
 
-    log(f"  Merging parts → {merged_dir} ...")
+    log(f"  Merging → {merged_dir} ...")
     result = subprocess.run(
         [sys.executable, str(merge_script),
-         str(download_dir), '--output-dir', str(merged_dir)],
+         str(temp_dir), '--output-dir', str(merged_dir)],
         capture_output=False
     )
 
     if result.returncode != 0:
         log("  ✗ Merge script returned non-zero exit code")
-        return []
+        return [], temp_dir
 
-    # New files = whatever appeared since before
     after = set(merged_dir.glob("*.csv"))
     new_files = sorted(after - before)
 
     if not new_files:
         log("  ⚠ Merge script ran but produced no new files")
-        return []
+        return [], temp_dir
 
     for f in new_files:
         size_mb = f.stat().st_size / (1024 * 1024)
         log(f"  ✓ Merged: {f.name}  ({size_mb:.1f} MB)")
-    return new_files
+    return new_files, temp_dir
 
 
 # ============================================================================
@@ -351,55 +394,100 @@ def run_pipeline(project_root, download_dir, merged_dir,
                  snowsql_path, snowflake_config, s3_destination,
                  remove_from_stage=True):
     """
-    Run the full pipeline for one batch of downloaded part files:
-      merge → upload S3 → validate → clean local → (optionally) remove stage
+    Run the full pipeline for every table group found in download_dir.
 
-    Returns True if everything succeeded.
+    For EACH group independently (one at a time):
+        MERGE that group's parts → single CSV
+        UPLOAD merged CSV → S3
+        VALIDATE S3 upload (size + MD5)
+        DELETE merged CSV from laptop
+        DELETE part files from laptop
+        → only then move on to the next group
+
+    This ensures the laptop never holds more than one table's merged data
+    at any time, regardless of how many groups are in download_dir.
+
+    Finally (optionally) signals Snowflake by removing files from stage.
     """
-    log("--- Pipeline: MERGE ---")
-    merged_files = merge_parts(project_root, download_dir, merged_dir)
-    if not merged_files:
-        log("  ✗ Pipeline aborted: merge produced no output files")
+    groups = identify_groups(download_dir)
+
+    if not groups:
+        log("  ✗ No CSV part files found in download directory")
         return False
 
-    all_ok = True
-    for merged_file in merged_files:
-        log(f"--- Pipeline: UPLOAD  {merged_file.name} ---")
-        if not upload_to_s3(merged_file, s3_destination):
-            log(f"  ✗ Pipeline aborted at upload for {merged_file.name}")
-            all_ok = False
-            break
+    total_groups = len(groups)
+    log(f"  Found {total_groups} table group(s) to process")
 
-        log(f"--- Pipeline: VALIDATE {merged_file.name} ---")
-        if not validate_s3_upload(merged_file, s3_destination):
-            log(f"  ✗ Pipeline aborted at validation for {merged_file.name}")
-            all_ok = False
-            break
+    for group_idx, (root, part_files) in enumerate(sorted(groups.items()), 1):
+        log("")
+        log(f"  ╔══ Group {group_idx}/{total_groups}: {root}  ({len(part_files)} parts) ══╗")
 
-        log(f"--- Pipeline: CLEAN LOCAL {merged_file.name} ---")
-        size_mb = merged_file.stat().st_size / (1024 * 1024)
-        merged_file.unlink()
-        log(f"  ✓ Deleted merged file : {merged_file.name}  ({size_mb:.2f} MB)")
-        log(f"    disk space reclaimed : {size_mb:.2f} MB")
+        # ── MERGE ─────────────────────────────────────────────────────────────
+        log(f"--- Pipeline [{group_idx}/{total_groups}]: MERGE ---")
+        merged_files, temp_dir = merge_one_group(project_root, part_files, merged_dir)
 
-    if not all_ok:
-        return False
+        if not merged_files:
+            log(f"  ✗ Merge failed for group '{root}' — stopping pipeline")
+            # Move parts back to download_dir so they're visible for inspection
+            if temp_dir and temp_dir.exists():
+                for f in temp_dir.glob("*.csv"):
+                    f.rename(download_dir / f.name)
+                temp_dir.rmdir()
+            return False
 
-    # Delete all part files from download_dir
-    part_files = sorted(download_dir.glob("*.csv"))
-    log(f"  Cleaning up {len(part_files)} part file(s) from download directory:")
-    for f in part_files:
-        size_mb = f.stat().st_size / (1024 * 1024)
-        f.unlink()
-        log(f"    deleted part: {f.name}  ({size_mb:.2f} MB)")
-    log("  ✓ Download directory empty")
+        # ── For each merged file: upload → validate → delete ─────────────────
+        upload_ok = True
+        for merged_file in merged_files:
+
+            log(f"--- Pipeline [{group_idx}/{total_groups}]: UPLOAD  {merged_file.name} ---")
+            if not upload_to_s3(merged_file, s3_destination):
+                log(f"  ✗ Upload failed — stopping pipeline")
+                upload_ok = False
+                break
+
+            log(f"--- Pipeline [{group_idx}/{total_groups}]: VALIDATE {merged_file.name} ---")
+            if not validate_s3_upload(merged_file, s3_destination):
+                log(f"  ✗ Validation failed — stopping pipeline")
+                upload_ok = False
+                break
+
+            log(f"--- Pipeline [{group_idx}/{total_groups}]: CLEAN MERGED {merged_file.name} ---")
+            size_mb = merged_file.stat().st_size / (1024 * 1024)
+            merged_file.unlink()
+            log(f"  ✓ Deleted merged file : {merged_file.name}  ({size_mb:.2f} MB)")
+            log(f"    disk space reclaimed : {size_mb:.2f} MB")
+
+        if not upload_ok:
+            # Leave parts in temp_dir for inspection; abort
+            return False
+
+        # ── DELETE part files (only after merged file is confirmed in S3) ─────
+        log(f"--- Pipeline [{group_idx}/{total_groups}]: CLEAN PARTS ---")
+        if temp_dir and temp_dir.exists():
+            part_files_in_temp = sorted(temp_dir.glob("*.csv")) + sorted(temp_dir.glob("*.csv.gz"))
+            log(f"  Deleting {len(part_files_in_temp)} part file(s):")
+            for f in part_files_in_temp:
+                size_mb = f.stat().st_size / (1024 * 1024)
+                f.unlink()
+                log(f"    deleted: {f.name}  ({size_mb:.2f} MB)")
+            temp_dir.rmdir()
+            log(f"  ✓ All parts deleted for '{root}'")
+
+        log(f"  ╚══ Group {group_idx}/{total_groups}: '{root}' DONE ══╝")
+
+    # All groups processed — verify download_dir is clean
+    leftover = [f for f in download_dir.glob("*.csv") if f.name != "download_progress.log"]
+    if leftover:
+        log(f"  ⚠ {len(leftover)} unexpected file(s) remain in download dir")
+    else:
+        log("  ✓ Download directory is empty — all tables processed")
 
     # Signal Snowflake to export the next table
     if remove_from_stage:
         log("--- Pipeline: REMOVE FROM STAGE ---")
         remove_stage_files(snowsql_path, snowflake_config)
 
-    log("--- Pipeline: COMPLETE ---")
+    log("--- Pipeline: ALL COMPLETE ---")
     return True
 
 

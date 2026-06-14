@@ -72,7 +72,33 @@ QUIT_AFTER_HOURS=2
 
 ## Running an Export (every time)
 
-### Step 1: Choose tables
+### Step 0: Check what needs refreshing (optional but recommended)
+
+```bash
+python3 idr2/local_laptop/step0_refresh_s3.py
+```
+
+This script:
+1. Reads every table from `idr2/all_available_tables.csv`
+2. Lists all `.csv` files in `S3_BUCKET` via `aws s3 ls`
+3. Computes each table's expected S3 filename prefix (e.g. `v2_prvdr_enrlmt_hstry_idr_export`)
+4. Prints a status report:
+   - `✓ FRESH`   — file is in S3 and younger than `REFRESH_DAY_THRESHOLD` days
+   - `⚠ STALE`   — file is in S3 but older than the threshold → needs refresh
+   - `✗ MISSING` — file is not in S3 at all → needs first download
+5. Writes a new `step1_tables_to_export.csv` containing only STALE + MISSING tables
+6. Automatically runs step2 and step3 to regenerate the Snowflake Cell 2 script
+
+If everything is fresh, the script exits cleanly without touching any files.
+
+Set `REFRESH_DAY_THRESHOLD` in `.env` to control how many days before a file is
+considered stale (default: 30).
+
+**Skip to Step 4 after step0 completes** — step1/step2/step3 are already done.
+
+---
+
+### Step 1: Choose tables (skip if you ran step0)
 
 Edit `step1_tables_to_export.csv`:
 
