@@ -70,7 +70,33 @@ python3 metadata_generator.py
 
 This reads `list_of_tables_to_download.csv` and generates `export_metadata.json` with all table information.
 
-Output: `export_metadata.json` containing all tables and their SQL queries
+**Important**: This creates metadata with `SELECT *` placeholders. The next step will fetch explicit columns.
+
+### Step 3b: Fetch Explicit Columns (In Snowflake Notebook)
+
+**This is the critical step** that ensures your exports match the original auto-generated system with explicit column lists.
+
+In a Snowflake Python notebook:
+
+```python
+# Copy and paste the contents of fetch_columns_from_snowflake.py
+# Then run:
+main()
+```
+
+This will:
+1. Load the metadata JSON
+2. Query Snowflake INFORMATION_SCHEMA for each table's columns
+3. Generate explicit SELECT statements (all columns listed by name, not SELECT *)
+4. Save updated metadata with proper column lists
+
+**Why this is important**: The original system explicitly lists every column by name. This ensures:
+- Consistent column ordering
+- Compatibility with the original export format
+- Explicit control over which columns are exported
+
+Output: Updated `export_metadata.json` containing explicit SQL queries with all columns named
+
 
 ### Step 4: Start Downloader (Terminal 1)
 
