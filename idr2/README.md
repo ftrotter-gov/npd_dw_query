@@ -138,6 +138,20 @@ The Snowflake notebook will:
 
 ---
 
+## Resume / Restart
+
+If step 4 was interrupted mid-run, **just restart it**:
+
+```bash
+python3 idr2/local_laptop/step4_download_merge_upload.py
+```
+
+On startup the script checks the download directory for pre-existing CSV files.
+If any are found (from the interrupted run), it **merges and uploads them immediately**
+before entering the polling loop — so no downloaded data is lost or re-downloaded.
+
+---
+
 ## Troubleshooting
 
 ### Files stuck in Snowflake stage

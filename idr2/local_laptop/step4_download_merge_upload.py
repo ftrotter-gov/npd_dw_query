@@ -259,11 +259,25 @@ def main():
     log(f"Snowflake config: {snowflake_config}")
     log(f"snowsql found at: {snowsql_path}")
 
-    # Clean up old CSVs
-    log("Cleaning up old CSV files...")
-    for f in download_dir.glob("*.csv"):
-        f.unlink()
-    log("Cleanup complete")
+    # ── Resume detection ──────────────────────────────────────────────────────
+    # If there are already CSV files in the download dir (from a previous
+    # interrupted run), merge and upload them NOW before entering the poll loop.
+    existing_csvs = list(download_dir.glob("*.csv"))
+    if existing_csvs:
+        log(f"====== RESUMING: found {len(existing_csvs)} pre-existing CSV file(s) ======")
+        log("Merging and uploading leftover files from previous run...")
+        if merge_csv_files(project_root, download_dir):
+            log("✓ Pre-existing files merged successfully")
+            # Clear the merged parts so the download dir is clean
+            for f in download_dir.glob("*.csv"):
+                f.unlink()
+            log("✓ Download directory cleared — ready to continue polling")
+        else:
+            log("✗ Merge of pre-existing files failed — check the merge script")
+            log("  Files left in place; continuing to poll anyway")
+    else:
+        log("No pre-existing CSV files found — starting fresh")
+    # ─────────────────────────────────────────────────────────────────────────
 
     # Timing
     start_time = time.time()
