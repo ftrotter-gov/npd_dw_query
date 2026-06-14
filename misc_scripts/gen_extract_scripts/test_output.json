@@ -1,0 +1,29 @@
+{
+  "metadata": {
+    "generated_timestamp": "2024-11-04T00:26:00",
+    "search_pattern": "%TEST%",
+    "total_tables_found": 1
+  },
+  "tables": [
+    {
+      "database": "TEST_DB",
+      "schema": "TEST_SCHEMA",
+      "table_name": "TEST_TABLE",
+      "table_type": "TABLE",
+      "columns": [
+        {
+          "column_name": "ID",
+          "data_type": "NUMBER",
+          "ordinal_position": 1,
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "NAME",
+          "data_type": "VARCHAR",
+          "ordinal_position": 2,
+          "is_nullable": "YES"
+        }
+      ]
+    }
+  ]
+}

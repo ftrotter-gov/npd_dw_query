@@ -1,0 +1,2983 @@
+{  
+  "metadata": {  
+    "generated_timestamp": "2025-11-04T00:47:52.226580",  
+    "search_pattern": "%PRVDR_ENMRT%",  
+    "total_tables_found": 16  
+  },  
+  "tables": [  
+    {  
+      "database": "IDRC_PRD",  
+      "schema": "CMS_VDM_VIEW_MDCR_PRD",  
+      "table_name": "V2_PRVDR_ENMRT_ADR_HSTRY",  
+      "table_type": "VIEW",  
+      "columns": [  
+        {  
+          "column_name": "PRVDR_NPI_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 1,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A NATIONAL PROVIDER IDENTIFIER (NPI) UNIQUELY ASSIGNED FOR COVERED HEALTH CARE PROVIDERS.",  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "ADR_TYPE_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 2,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "AN INTEGRATED DATA REPOSITORY (IDR) DERIVED CODE TO IDENTIFY THE PROVIDERS ADDRESS TYPE.    REFERENCE TABLE: ADR_TYPE_CD",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "ADR_TYPE_DESC",  
+          "data_type": "TEXT",  
+          "ordinal_position": 3,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A DESCRIPTION OF A CODE IDENTIFYING AN ADDRESS TYPE.",  
+          "character_maximum_length": 500,  
+          "type_description": "TEXT(500)"  
+        },  
+        {  
+          "column_name": "IDR_TRANS_EFCTV_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 4,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) IDENTIFYING WHEN A RECORD IS LOADED.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        },  
+        {  
+          "column_name": "IDR_TRANS_OBSLT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 5,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHEN A RECORD WAS LAST KNOWN TO BE PRESENT IN THE SOURCE. THE CURRENT VERSION OF A RECORD WILL BE SET TO 12/31/9999 00:00:00.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        },  
+        {  
+          "column_name": "IDR_LTST_TRANS_FLG",  
+          "data_type": "TEXT",  
+          "ordinal_position": 6,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "AN INDICATOR ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) THAT IDENTIFIES WHICH TRANSACTION RECORD, BASED ON PRIMARY KEY, IS CONSIDERED TO REPRESENT THE MOST RECENT RECORD RECEIVED FROM THE SOURCE.    Y = LATEST VERSION OF THE RECORD  N = PREVIOUS VERSION OF THE RECORD",  
+          "character_maximum_length": 1,  
+          "type_description": "TEXT(1)"  
+        },  
+        {  
+          "column_name": "LINE_1_ADR",  
+          "data_type": "TEXT",  
+          "ordinal_position": 7,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A FIRST LINE OF AN ADDRESS ASSOCIATED WITH A BENEFICIARY, PROVIDER, OR CLAIM.",  
+          "character_maximum_length": 55,  
+          "type_description": "TEXT(55)"  
+        },  
+        {  
+          "column_name": "LINE_2_ADR",  
+          "data_type": "TEXT",  
+          "ordinal_position": 8,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A SECOND LINE OF AN ADDRESS ASSOCIATED WITH A BENEFICIARY, PROVIDER, OR CLAIM.  THIS ADDRESS LINE IS OPTIONAL AND USED TO INDICATE THE POST OFFICE BOX, SUITE NUMBER, APARTMENT NUMBER, ETC.",  
+          "character_maximum_length": 55,  
+          "type_description": "TEXT(55)"  
+        },  
+        {  
+          "column_name": "ADR_CITY_NAME",  
+          "data_type": "TEXT",  
+          "ordinal_position": 9,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A NAME OF THE CITY ASSOCIATED WITH A FIVE-DIGIT ZIP CODE DEFINED BY THE UNITED STATES POSTAL SERVICE (USPS).",  
+          "character_maximum_length": 40,  
+          "type_description": "TEXT(40)"  
+        },  
+        {  
+          "column_name": "GEO_USPS_STATE_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 10,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A CODE IDENTIFYING A TWO-CHARACTER ALPHABETIC ABBREVIATION FOR A STATE DEFINED BY THE FEDERAL INFORMATION PROCESSING STANDARD (FIPS).    REFERENCE TABLE: GEO_FIPS_STATE_CD",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "ZIP5_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 11,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": null,  
+          "character_maximum_length": 5,  
+          "type_description": "TEXT(5)"  
+        },  
+        {  
+          "column_name": "ZIP4_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 12,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": null,  
+          "character_maximum_length": 4,  
+          "type_description": "TEXT(4)"  
+        },  
+        {  
+          "column_name": "GEO_SK",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 13,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A NUMERIC SURROGATE KEY THAT IS INDICATIVE OF A PARTICULAR GEOGRAPHICAL LOCATION.",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "CNTRY_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 14,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A CODE IDENTIFYING A COUNTRY ASSOCIATED WITH A BENEFICIARY, PROVIDER, OR CLAIM ADDRESS AS ASSIGNED BY THE INTERNATIONAL ORGANIZATION FOR STANDARDIZATION (ISO).    REFERENCE TABLE: GEO_CNTRY_CD",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "PHNE_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 15,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A NUMBER THAT REPRESENTS THE TELEPHONE NUMBER OF THE ENTITY OR PERSON.",  
+          "character_maximum_length": 20,  
+          "type_description": "TEXT(20)"  
+        },  
+        {  
+          "column_name": "PHNE_EXTNSN_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 16,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A 5 DIGIT NUMBER IN ADDITION TO THE TELEPHONE NUMBER OF THE ENTITY OR PERSON.",  
+          "character_maximum_length": 5,  
+          "type_description": "TEXT(5)"  
+        },  
+        {  
+          "column_name": "FAX_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 17,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A NUMBER THAT REPRESENTS THE FAX NUMBER OF THE ENTITY OR PERSON.",  
+          "character_maximum_length": 20,  
+          "type_description": "TEXT(20)"  
+        },  
+        {  
+          "column_name": "META_SRC_SK",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 18,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A UNIQUE NUMERIC VALUE ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) USED TO IDENTIFY THE SPECIFIC SOURCE OF THE DATA WHEN A ROW IS LOADED INTO THE IDR.    REFERENCE TABLE: V2_MDCR_META_DCTNRY_SRC",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "META_SRC_PRCSG_ID",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 19,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A VALUE ASSIGNED BASED ON A BATCH IDENTIFICATION IN ORDER TO TRACE IT BACK TO ITS ORIGINAL SOURCE. IT WILL ONLY BE POPULATED WHEN A RECORD IS INSERTED.",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "META_LTST_SRC_PRCSG_ID",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 20,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A VALUE ASSIGNED BASED ON A BATCH IDENTIFICATION IN ORDER TO TRACE IT BACK TO ITS ORIGINAL SOURCE. IT WILL ONLY BE POPULATED WHEN A RECORD IS SUBSEQUENTLY UPDATED.",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "IDR_INSRT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 21,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHILE PERFORMING AN INSERT OPERATION.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        },  
+        {  
+          "column_name": "IDR_UPDT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 22,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHEN UPDATES ARE MADE TO ANY NON-PRIMARY KEY COLUMN.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        }  
+      ]  
+    },  
+    {  
+      "database": "IDRC_PRD",  
+      "schema": "CMS_VDM_VIEW_MDCR_PRD",  
+      "table_name": "V2_PRVDR_ENMRT_DMGRPHCS_CRNT",  
+      "table_type": "VIEW",  
+      "columns": [  
+        {  
+          "column_name": "PRVDR_NPI_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 1,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A NATIONAL PROVIDER IDENTIFIER (NPI) UNIQUELY ASSIGNED FOR COVERED HEALTH CARE PROVIDERS.",  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "PRVDR_ENT_TYPE_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 2,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A CODE THAT IDENTIFIES THE PROVIDER'S BUSINESS STRUCTURE.\n\nVALID VALUES:\n'1' = INDIVIDUAL\n'2' = ORGANIZATION",  
+          "character_maximum_length": 1,  
+          "type_description": "TEXT(1)"  
+        },  
+        {  
+          "column_name": "PRVDR_ENT_TYPE_DESC",  
+          "data_type": "TEXT",  
+          "ordinal_position": 3,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "DESCRIPTION OF THE ENTITY TYPE CODE.  THE PROVIDER'S BUSINESS STRUCTURE IS EITHER AN INDIVIDUAL OR AN ORGANIZATION.",  
+          "character_maximum_length": 12,  
+          "type_description": "TEXT(12)"  
+        },  
+        {  
+          "column_name": "PRVDR_CRTFCTN_DT",  
+          "data_type": "DATE",  
+          "ordinal_position": 4,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "THE DATE THE PROVIDER CERTIFIED THAT ALL INFORMATION RELATED TO THE NATIONAL PROVIDER IDENTIFIER (NPI) RECORD IS ACCURATE AND UP-TO-DATE.",  
+          "type_description": "DATE"  
+        },  
+        {  
+          "column_name": "PRVDR_RPLCMT_NPI_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 5,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A REPLACEMENT NATIONAL PROVIDER IDENTIFIER (NPI) UNIQUELY ASSIGNED FOR A COVERED HEALTH CARE PROVIDER.  THIS IS THE PROVIDER\u2019S NPI IF THE PROVIDER HAS BEEN ASSIGNED A REPLACEMENT NPI.  IF THE PROVIDER HAS NEVER BEEN ASSIGNED A REPLACEMENT NPI, THIS DATA ELEMENT WILL NOT BE POPULATED.",  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "PRVDR_SSN_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 6,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A NUMBER ASSIGNED BY THE SOCIAL SECURITY ADMINISTRATION (SSA) USED TO IDENTIFY AN INDIVIDUAL.",  
+          "character_maximum_length": 9,  
+          "type_description": "TEXT(9)"  
+        },  
+        {  
+          "column_name": "PRVDR_TIN_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 7,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "AN IDENTIFYING NUMBER USED FOR TAX PURPOSES IN THE UNITED STATES AND ASSIGNED BY THE INTERNAL REVENUE SERVICE (IRS).  THE IRS ASSIGNS A TAX IDENTIFICATION NUMBER (TIN) TO INDIVIDUALS OR AN EMPLOYER IDENTIFICATION NUMBER (EIN) TO EMPLOYERS.",  
+          "character_maximum_length": 9,  
+          "type_description": "TEXT(9)"  
+        },  
+        {  
+          "column_name": "PRVDR_EIN_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 8,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "AN IDENTIFYING NUMBER USED FOR TAX PURPOSES IN THE UNITED STATES AND ASSIGNED BY THE INTERNAL REVENUE SERVICE (IRS).  THE IRS ASSIGNS A TAX IDENTIFICATION NUMBER (TIN) TO INDIVIDUALS OR AN EMPLOYER IDENTIFICATION NUMBER (EIN) TO EMPLOYERS.",  
+          "character_maximum_length": 9,  
+          "type_description": "TEXT(9)"  
+        },  
+        {  
+          "column_name": "PRVDR_ENMRTN_DT",  
+          "data_type": "DATE",  
+          "ordinal_position": 9,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "THE DATE THE NATIONAL PROVIDER IDENTIFIER (NPI) WAS ASSIGNED.",  
+          "type_description": "DATE"  
+        },  
+        {  
+          "column_name": "PRVDR_LAST_UPDT_DT",  
+          "data_type": "DATE",  
+          "ordinal_position": 10,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A DATE INDICATING THE LAST TIME THE PROVIDER RECORD WAS UPDATED IN THE NATIONAL PLAN AND PROVIDER ENUMERATION SYSTEM (NPPES).",  
+          "type_description": "DATE"  
+        },  
+        {  
+          "column_name": "PRVDR_DEACTVTN_RSN_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 11,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A CODE REPRESENTING THE REASON THE NATIONAL PLAN AND PROVIDER ENUMERATION SYSTEM (NPPES) DEACTIVATED A PROVIDER RECORD.\n\nREFERENCE TABLE:  PRVDR_DEACTVTN_RSN_CD",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "PRVDR_DEACTVTN_RSN_DESC",  
+          "data_type": "TEXT",  
+          "ordinal_position": 12,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A  DESCRIPTION OF A CODE IDENTIFYING THE REASON THE NATIONAL PLAN AND PROVIDER ENUMERATION SYSTEM (NPPES) DEACTIVATED A PROVIDER ENUMERATION RECORD.",  
+          "character_maximum_length": 500,  
+          "type_description": "TEXT(500)"  
+        },  
+        {  
+          "column_name": "PRVDR_DEACTVTN_DT",  
+          "data_type": "DATE",  
+          "ordinal_position": 13,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A DATE INDICATING WHEN THE PROVIDER WAS DEACTIVATED.",  
+          "type_description": "DATE"  
+        },  
+        {  
+          "column_name": "PRVDR_REACTVTN_DT",  
+          "data_type": "DATE",  
+          "ordinal_position": 14,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A DATE INDICATING WHEN THE PROVIDER WAS REACTIVATE.",  
+          "type_description": "DATE"  
+        },  
+        {  
+          "column_name": "PRVDR_GNDR_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 15,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "AN IDENTIFIER DESCRIBING THE SEX OF THE PROVIDER.\n\nVALID VALUES:\n'M' = MALE \n'F' = FEMALE",  
+          "character_maximum_length": 1,  
+          "type_description": "TEXT(1)"  
+        },  
+        {  
+          "column_name": "PRVDR_BIRTH_DT",  
+          "data_type": "DATE",  
+          "ordinal_position": 16,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A DATE OF BIRTH OF A PROVIDER.",  
+          "type_description": "DATE"  
+        },  
+        {  
+          "column_name": "PRVDR_BIRTH_USPS_STATE_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 17,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A CODE IDENTIFYING THE TWO-CHARACTER UNITED STATES POSTAL SERVICE (USPS) ALPHABETIC ABBREVIATION FOR THE STATE THE PROVIDER WAS BORN IN.\n\nREFERENCE TABLE: GEO_USPS_STATE_CD  ",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "PRVDR_BIRTH_CNTRY_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 18,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A  TWO-CHARACTER ALPHABETIC ABBREVIATION OF THE COUNTRY WHERE THE HEALTH CARE PROVIDER WAS BORN. IT WILL ONLY BE POPULATED FOR INDIVIDUAL PROVIDERS (PROVIDER ENTITY TYPE CODE = 1).\n\nREFERENCE TABLE:  GEO_CNTRY_CD",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "PRVDR_SOLE_PRPRTR_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 19,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A CODE INDICATING IF A TYPE 1 PROVIDER (INDIVIDUAL) IS THE SOLE PROPRIETOR.\nVALID VALUES:\nY = YES, ENTITY TYPE 1 PROVIDER (INDIVIDUAL) IS A SOLE PROPRIETOR \nN = NO, ENTITY TYPE 1 PROVIDER (INDIVIDUAL) IS NOT A SOLE PROPRIETOR \nX = NOT ANSWERED",  
+          "character_maximum_length": 1,  
+          "type_description": "TEXT(1)"  
+        },  
+        {  
+          "column_name": "PRVDR_ORG_SUBRDNT_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 20,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A CODE IDENTIFYING IF A PROVIDER IS A SUBPART OF A HEALTH CARE ORGANIZATION (I.E., ENTITY TYPE 2).\n\nVALID VALUES:\nY = YES, ENTITY TYPE 2 PROVIDER (ORGANIZATION) IS A SUBPART \nN = NO, ENTITY TYPE 2 PROVIDER (ORGANIZATION) IS NOT A SUBPART \nX = NOT ANSWERED",  
+          "character_maximum_length": 1,  
+          "type_description": "TEXT(1)"  
+        },  
+        {  
+          "column_name": "PRVDR_PRNT_ORG_TIN_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 21,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A UNIQUE  TAX IDENTIFIER ASSIGNED TO A HEALTH CARE PROVIDER BY SOCIAL SECURITY ADMINISTRATION (SSA) OR THE INTERNAL\nREVENUE SERVICE (IRS).",  
+          "character_maximum_length": 9,  
+          "type_description": "TEXT(9)"  
+        },  
+        {  
+          "column_name": "PRVDR_PREX_NAME",  
+          "data_type": "TEXT",  
+          "ordinal_position": 22,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "PROVIDER NAME PREFIX TEXT;PROVIDER OTHER NAME PREFIX TEXT;AUTHORIZED OFFICIAL NAME PREFIX TEXT;CONTACT PERSON NAME PREFIX TEXT",  
+          "character_maximum_length": 20,  
+          "type_description": "TEXT(20)"  
+        },  
+        {  
+          "column_name": "PRVDR_1ST_NAME",  
+          "data_type": "TEXT",  
+          "ordinal_position": 23,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A FIRST NAME OF A PROVIDER.",  
+          "character_maximum_length": 35,  
+          "type_description": "TEXT(35)"  
+        },  
+        {  
+          "column_name": "PRVDR_MDL_NAME",  
+          "data_type": "TEXT",  
+          "ordinal_position": 24,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "AN OFFICIAL NAME UNDER WHICH A BUSINESS OPERATES AND HOLDS ITSELF OUT TO THE PUBLIC.",  
+          "character_maximum_length": 20,  
+          "type_description": "TEXT(20)"  
+        },  
+        {  
+          "column_name": "PRVDR_LAST_NAME",  
+          "data_type": "TEXT",  
+          "ordinal_position": 25,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A SURNAME OF THE INDIVIDUAL.",  
+          "character_maximum_length": 35,  
+          "type_description": "TEXT(35)"  
+        },  
+        {  
+          "column_name": "PRVDR_SFX_NAME",  
+          "data_type": "TEXT",  
+          "ordinal_position": 26,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "AN IDENTIFIER OF A PHRASE AT THE END OF A NAME THAT FURTHER DESCRIBES AN INDIVIDUAL, E.G.'JR', 'SR', ETC.",  
+          "character_maximum_length": 20,  
+          "type_description": "TEXT(20)"  
+        },  
+        {  
+          "column_name": "ORG_NAME",  
+          "data_type": "TEXT",  
+          "ordinal_position": 27,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "AN OFFICIAL NAME UNDER WHICH A BUSINESS OPERATES AND HOLDS ITSELF OUT TO THE PUBLIC.",  
+          "character_maximum_length": 100,  
+          "type_description": "TEXT(100)"  
+        },  
+        {  
+          "column_name": "MLG_LINE_1_ADR",  
+          "data_type": "TEXT",  
+          "ordinal_position": 28,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A FIRST LINE OF AN ADDRESS ASSOCIATED WITH A BENEFICIARY, PROVIDER, OR CLAIM.  ",  
+          "character_maximum_length": 55,  
+          "type_description": "TEXT(55)"  
+        },  
+        {  
+          "column_name": "MLG_LINE_2_ADR",  
+          "data_type": "TEXT",  
+          "ordinal_position": 29,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A SECOND LINE OF AN ADDRESS ASSOCIATED WITH A BENEFICIARY, PROVIDER, OR CLAIM.  THIS ADDRESS LINE IS OPTIONAL AND USED TO INDICATE THE POST OFFICE BOX, SUITE NUMBER, APARTMENT NUMBER, ETC.",  
+          "character_maximum_length": 55,  
+          "type_description": "TEXT(55)"  
+        },  
+        {  
+          "column_name": "MLG_ADR_CITY_NAME",  
+          "data_type": "TEXT",  
+          "ordinal_position": 30,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A NAME OF THE CITY ASSOCIATED WITH A FIVE-DIGIT ZIP CODE DEFINED BY THE UNITED STATES POSTAL SERVICE (USPS).",  
+          "character_maximum_length": 40,  
+          "type_description": "TEXT(40)"  
+        },  
+        {  
+          "column_name": "MLG_GEO_USPS_STATE_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 31,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A CODE IDENTIFYING A TWO-CHARACTER ALPHABETIC ABBREVIATION FOR A STATE IN THE UNITED STATES AS DEFINED BY UNITED STATES POSTAL SERVICE (USPS) ASSOCIATED WITH A BENEFICIARY, PROVIDER, OR CLAIM ADDRESS.\n\nREFERENCE TABLE:  GEO_USPS_STATE_CD",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "MLG_GEO_ZIP5_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 32,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A FIVE-DIGIT ZIP CODE DEFINED BY THE UNITED STATES POSTAL SERVICE (USPS) THAT IDENTIFIES A DESTINATION POST OFFICE OR  DELIVERY AREA ASSOCIATED WITH A BENEFICIARY, PROVIDER, OR CLAIM ADDRESS.\n\nREFERENCE TABLE:  GEO_ZIP5_CD",  
+          "character_maximum_length": 5,  
+          "type_description": "TEXT(5)"  
+        },  
+        {  
+          "column_name": "MLG_GEO_ZIP4_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 33,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A FOUR-DIGIT ZIP CODE EXTENSION DEFINED BY THE UNITED STATES POSTAL SERVICE (USPS) THAT REPRESENTS A SPECIFIC DELIVERY ROUTE WITHIN A DELIVERY AREA ASSOCIATED WITH A BENEFICIARY, PROVIDER, OR CLAIM ADDRESS.\n\nREFERENCE TABLE:  GEO_ZIP9_CD",  
+          "character_maximum_length": 4,  
+          "type_description": "TEXT(4)"  
+        },  
+        {  
+          "column_name": "GEO_MLG_SK",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 34,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A NUMERIC SURROGATE KEY THAT IS INDICATIVE OF A PARTICULAR GEOGRAPHICAL LOCATION.",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "MLG_CNTRY_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 35,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A CODE IDENTIFYING A COUNTRY ASSOCIATED WITH A BENEFICIARY, PROVIDER, OR CLAIM ADDRESS AS ASSIGNED BY THE INTERNATIONAL ORGANIZATION FOR STANDARDIZATION (ISO).\n\nREFERENCE TABLE: GEO_CNTRY_CD",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "MLG_PHNE_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 36,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A NUMBER THAT REPRESENTS THE TELEPHONE NUMBER OF THE ENTITY OR PERSON.",  
+          "character_maximum_length": 16777216,  
+          "type_description": "TEXT(16777216)"  
+        },  
+        {  
+          "column_name": "MLG_PHNE_EXTNSN_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 37,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A NUMBER IN ADDITION TO THE TELEPHONE NUMBER OF THE ENTITY OR PERSON.",  
+          "character_maximum_length": 16777216,  
+          "type_description": "TEXT(16777216)"  
+        },  
+        {  
+          "column_name": "MLG_FAX_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 38,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "THE FACSIMILE MACHINE TELEPHONE LINE NUMBER.",  
+          "character_maximum_length": 16777216,  
+          "type_description": "TEXT(16777216)"  
+        },  
+        {  
+          "column_name": "PRCTC_LINE_1_ADR",  
+          "data_type": "TEXT",  
+          "ordinal_position": 39,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A NUMBER AND STREET NAME IDENTIFYING WHERE THE ORGANIZATION IS LOCATED.",  
+          "character_maximum_length": 55,  
+          "type_description": "TEXT(55)"  
+        },  
+        {  
+          "column_name": "PRCTC_LINE_2_ADR",  
+          "data_type": "TEXT",  
+          "ordinal_position": 40,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "AN ADDITIONAL ADDRESS LINE IDENTIFYING WHERE THE ORGANIZATION IS LOCATED.  THIS ADDRESS LINE IS OPTIONAL AND USED TO INDICATE THE POST OFFICE BOX, SUITE NUMBER, APARTMENT NUMBER, ETC.",  
+          "character_maximum_length": 55,  
+          "type_description": "TEXT(55)"  
+        },  
+        {  
+          "column_name": "PRCTC_ADR_CITY_NAME",  
+          "data_type": "TEXT",  
+          "ordinal_position": 41,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A NAME OF THE CITY ASSOCIATED WITH A FIVE-DIGIT ZIP CODE DEFINED BY THE UNITED STATES POSTAL SERVICE (USPS).",  
+          "character_maximum_length": 40,  
+          "type_description": "TEXT(40)"  
+        },  
+        {  
+          "column_name": "PRCTC_GEO_USPS_STATE_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 42,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A CODE IDENTIFYING A TWO-CHARACTER ALPHABETIC ABBREVIATION FOR A STATE IN THE UNITED STATES AS DEFINED BY UNITED STATES POSTAL SERVICE (USPS) ASSOCIATED WITH A BENEFICIARY, PROVIDER, OR CLAIM ADDRESS.\n\nREFERENCE TABLE:  GEO_USPS_STATE_CD",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "PRCTC_GEO_ZIP5_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 43,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A FIVE-DIGIT ZIP CODE DEFINED BY THE UNITED STATES POSTAL SERVICE (USPS) THAT IDENTIFIES THE DESTINATION POST OFFICE OR DELIVERY AREA.",  
+          "character_maximum_length": 5,  
+          "type_description": "TEXT(5)"  
+        },  
+        {  
+          "column_name": "PRCTC_GEO_ZIP4_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 44,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A FOUR-DIGIT ZIP CODE EXTENSION DEFINED BY THE UNITED STATES POSTAL SERVICE (USPS) THAT REPRESENTS A SPECIFIC DELIVERY ROUTE WITHIN A DELIVERY AREA ASSOCIATED WITH A BENEFICIARY, PROVIDER, OR CLAIM ADDRESS AND USED IN THE GEOCODING PROCESS.\n\nREFERENCE TABLE: GEO_ZIP9_CD",  
+          "character_maximum_length": 4,  
+          "type_description": "TEXT(4)"  
+        },  
+        {  
+          "column_name": "GEO_PRCTC_SK",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 45,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "AN INTEGRATED DATA REPOSITORY (IDR) ASSIGNED NUMERIC SURROGATE KEY IDENTIFYING A PARTICULAR GEOGRAPHICAL LOCATION BY ITS FIVE-DIGIT ZIP CODE.",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "PRCTC_CNTRY_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 46,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A TWO-CHARACTER ALPHABETIC ABBREVIATION OF THE COUNTRY ASSOCIATED WITH A BENEFICIARY, PROVIDER, OR CLAIM ADDRESS. \n\nREFERENCE TABLE:  TBD",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "PRCTC_PHNE_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 47,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A NUMBER THAT REPRESENTS THE TELEPHONE NUMBER OF THE ENTITY OR PERSON.",  
+          "character_maximum_length": 16777216,  
+          "type_description": "TEXT(16777216)"  
+        },  
+        {  
+          "column_name": "PRCTC_PHNE_EXTNSN_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 48,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A NUMBER IN ADDITION TO THE TELEPHONE NUMBER OF THE ENTITY OR PERSON.",  
+          "character_maximum_length": 16777216,  
+          "type_description": "TEXT(16777216)"  
+        },  
+        {  
+          "column_name": "PRCTC_FAX_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 49,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "THE FACSIMILE MACHINE TELEPHONE LINE NUMBER.",  
+          "character_maximum_length": 16777216,  
+          "type_description": "TEXT(16777216)"  
+        },  
+        {  
+          "column_name": "META_SRC_SK",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 50,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A UNIQUE NUMERIC VALUE ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) USED TO IDENTIFY THE SPECIFIC SOURCE OF THE DATA WHEN A ROW IS LOADED INTO THE IDR.\n\nREFERENCE TABLE: V2_MDCR_META_DCTNRY_SRC",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        }  
+      ]  
+    },  
+    {  
+      "database": "IDRC_PRD",  
+      "schema": "CMS_VDM_VIEW_MDCR_PRD",  
+      "table_name": "V2_PRVDR_ENMRT_HSTRY",  
+      "table_type": "VIEW",  
+      "columns": [  
+        {  
+          "column_name": "PRVDR_NPI_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 1,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A NATIONAL PROVIDER IDENTIFIER (NPI) UNIQUELY ASSIGNED FOR COVERED HEALTH CARE PROVIDERS.",  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "IDR_TRANS_EFCTV_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 2,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) IDENTIFYING WHEN A RECORD IS LOADED.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        },  
+        {  
+          "column_name": "IDR_TRANS_OBSLT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 3,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHEN A RECORD WAS LAST KNOWN TO BE PRESENT IN THE SOURCE. THE CURRENT VERSION OF A RECORD WILL BE SET TO 12/31/9999 00:00:00.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        },  
+        {  
+          "column_name": "IDR_LTST_TRANS_FLG",  
+          "data_type": "TEXT",  
+          "ordinal_position": 4,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "AN INDICATOR ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) THAT IDENTIFIES WHICH TRANSACTION RECORD, BASED ON PRIMARY KEY, IS CONSIDERED TO REPRESENT THE MOST RECENT RECORD RECEIVED FROM THE SOURCE.\n\nY = LATEST VERSION OF THE RECORD\nN = PREVIOUS VERSION OF THE RECORD\n",  
+          "character_maximum_length": 1,  
+          "type_description": "TEXT(1)"  
+        },  
+        {  
+          "column_name": "PRVDR_CRTFCTN_DT",  
+          "data_type": "DATE",  
+          "ordinal_position": 5,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "THE DATE THE PROVIDER CERTIFIED THAT ALL INFORMATION RELATED TO THE NATIONAL PROVIDER IDENTIFIER (NPI) RECORD IS ACCURATE AND UP-TO-DATE.",  
+          "type_description": "DATE"  
+        },  
+        {  
+          "column_name": "PRVDR_ENT_TYPE_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 6,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A CODE THAT IDENTIFIES THE PROVIDER'S BUSINESS STRUCTURE.\n\nVALID VALUES:\n'1' = INDIVIDUAL\n'2' = ORGANIZATION",  
+          "character_maximum_length": 1,  
+          "type_description": "TEXT(1)"  
+        },  
+        {  
+          "column_name": "PRVDR_ENT_TYPE_DESC",  
+          "data_type": "TEXT",  
+          "ordinal_position": 7,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "DESCRIPTION OF THE ENTITY TYPE CODE.  THE PROVIDER'S BUSINESS STRUCTURE IS EITHER AN INDIVIDUAL OR AN ORGANIZATION.\n",  
+          "character_maximum_length": 12,  
+          "type_description": "TEXT(12)"  
+        },  
+        {  
+          "column_name": "PRVDR_RPLCMT_NPI_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 8,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A REPLACEMENT NATIONAL PROVIDER IDENTIFIER (NPI) UNIQUELY ASSIGNED FOR A COVERED HEALTH CARE PROVIDER.  THIS IS THE PROVIDER\u2019S NPI IF THE PROVIDER HAS BEEN ASSIGNED A REPLACEMENT NPI.  IF THE PROVIDER HAS NEVER BEEN ASSIGNED A REPLACEMENT NPI, THIS DATA ELEMENT WILL NOT BE POPULATED.",  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "PRVDR_SSN_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 9,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A NUMBER ASSIGNED BY THE SOCIAL SECURITY ADMINISTRATION (SSA) USED TO IDENTIFY AN INDIVIDUAL.",  
+          "character_maximum_length": 9,  
+          "type_description": "TEXT(9)"  
+        },  
+        {  
+          "column_name": "PRVDR_TIN_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 10,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "AN IDENTIFYING NUMBER USED FOR TAX PURPOSES IN THE UNITED STATES AND ASSIGNED BY THE INTERNAL REVENUE SERVICE (IRS).  THE IRS ASSIGNS A TAX IDENTIFICATION NUMBER (TIN) TO INDIVIDUALS OR AN EMPLOYER IDENTIFICATION NUMBER (EIN) TO EMPLOYERS.",  
+          "character_maximum_length": 9,  
+          "type_description": "TEXT(9)"  
+        },  
+        {  
+          "column_name": "PRVDR_EIN_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 11,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "AN IDENTIFYING NUMBER USED FOR TAX PURPOSES IN THE UNITED STATES AND ASSIGNED BY THE INTERNAL REVENUE SERVICE (IRS).  THE IRS ASSIGNS A TAX IDENTIFICATION NUMBER (TIN) TO INDIVIDUALS OR AN EMPLOYER IDENTIFICATION NUMBER (EIN) TO EMPLOYERS.",  
+          "character_maximum_length": 9,  
+          "type_description": "TEXT(9)"  
+        },  
+        {  
+          "column_name": "PRVDR_ENMRTN_DT",  
+          "data_type": "DATE",  
+          "ordinal_position": 12,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "THE DATE THE NATIONAL PROVIDER IDENTIFIER (NPI) WAS ASSIGNED.",  
+          "type_description": "DATE"  
+        },  
+        {  
+          "column_name": "PRVDR_LAST_UPDT_DT",  
+          "data_type": "DATE",  
+          "ordinal_position": 13,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A DATE INDICATING THE LAST TIME THE PROVIDER RECORD WAS UPDATED IN THE NATIONAL PLAN AND PROVIDER ENUMERATION SYSTEM (NPPES).",  
+          "type_description": "DATE"  
+        },  
+        {  
+          "column_name": "PRVDR_DEACTVTN_RSN_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 14,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A CODE REPRESENTING THE REASON THE NATIONAL PLAN AND PROVIDER ENUMERATION SYSTEM (NPPES) DEACTIVATED A PROVIDER RECORD.\n\nREFERENCE TABLE:  PRVDR_DEACTVTN_RSN_CD",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "PRVDR_DEACTVTN_RSN_DESC",  
+          "data_type": "TEXT",  
+          "ordinal_position": 15,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A  DESCRIPTION OF A CODE IDENTIFYING THE REASON THE NATIONAL PLAN AND PROVIDER ENUMERATION SYSTEM (NPPES) DEACTIVATED A PROVIDER ENUMERATION RECORD.",  
+          "character_maximum_length": 500,  
+          "type_description": "TEXT(500)"  
+        },  
+        {  
+          "column_name": "PRVDR_DEACTVTN_DT",  
+          "data_type": "DATE",  
+          "ordinal_position": 16,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A DATE INDICATING WHEN THE PROVIDER WAS DEACTIVATED.",  
+          "type_description": "DATE"  
+        },  
+        {  
+          "column_name": "PRVDR_REACTVTN_DT",  
+          "data_type": "DATE",  
+          "ordinal_position": 17,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A DATE INDICATING WHEN THE PROVIDER WAS REACTIVATE.",  
+          "type_description": "DATE"  
+        },  
+        {  
+          "column_name": "PRVDR_GNDR_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 18,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "AN IDENTIFIER DESCRIBING THE SEX OF THE PROVIDER.\n\nVALID VALUES:\n'M' = MALE \n'F' = FEMALE",  
+          "character_maximum_length": 1,  
+          "type_description": "TEXT(1)"  
+        },  
+        {  
+          "column_name": "PRVDR_BIRTH_DT",  
+          "data_type": "DATE",  
+          "ordinal_position": 19,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A DATE OF BIRTH OF A PROVIDER.",  
+          "type_description": "DATE"  
+        },  
+        {  
+          "column_name": "PRVDR_BIRTH_USPS_STATE_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 20,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A CODE IDENTIFYING THE TWO-CHARACTER UNITED STATES POSTAL SERVICE (USPS) ALPHABETIC ABBREVIATION FOR THE STATE THE PROVIDER WAS BORN IN.\n\nREFERENCE TABLE: GEO_USPS_STATE_CD  ",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "PRVDR_BIRTH_CNTRY_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 21,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A  TWO-CHARACTER ALPHABETIC ABBREVIATION OF THE COUNTRY WHERE THE HEALTH CARE PROVIDER WAS BORN. IT WILL ONLY BE POPULATED FOR INDIVIDUAL PROVIDERS (PROVIDER ENTITY TYPE CODE = 1).\n\nREFERENCE TABLE:  GEO_CNTRY_CD",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "PRVDR_SOLE_PRPRTR_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 22,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A CODE INDICATING IF A TYPE 1 PROVIDER (INDIVIDUAL) IS THE SOLE PROPRIETOR.\nVALID VALUES:\nY = YES, ENTITY TYPE 1 PROVIDER (INDIVIDUAL) IS A SOLE PROPRIETOR \nN = NO, ENTITY TYPE 1 PROVIDER (INDIVIDUAL) IS NOT A SOLE PROPRIETOR \nX = NOT ANSWERED",  
+          "character_maximum_length": 1,  
+          "type_description": "TEXT(1)"  
+        },  
+        {  
+          "column_name": "PRVDR_ORG_SUBRDNT_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 23,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A CODE IDENTIFYING IF A PROVIDER IS A SUBPART OF A HEALTH CARE ORGANIZATION (I.E., ENTITY TYPE 2).\n\nVALID VALUES:\nY = YES, ENTITY TYPE 2 PROVIDER (ORGANIZATION) IS A SUBPART \nN = NO, ENTITY TYPE 2 PROVIDER (ORGANIZATION) IS NOT A SUBPART \nX = NOT ANSWERED",  
+          "character_maximum_length": 1,  
+          "type_description": "TEXT(1)"  
+        },  
+        {  
+          "column_name": "PRVDR_PRNT_ORG_TIN_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 24,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A UNIQUE  TAX IDENTIFIER ASSIGNED TO A HEALTH CARE PROVIDER BY SOCIAL SECURITY ADMINISTRATION (SSA) OR THE INTERNAL\nREVENUE SERVICE (IRS).",  
+          "character_maximum_length": 9,  
+          "type_description": "TEXT(9)"  
+        },  
+        {  
+          "column_name": "META_SRC_SK",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 25,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A UNIQUE NUMERIC VALUE ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) USED TO IDENTIFY THE SPECIFIC SOURCE OF THE DATA WHEN A ROW IS LOADED INTO THE IDR.\n\nREFERENCE TABLE: V2_MDCR_META_DCTNRY_SRC",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "META_SRC_PRCSG_ID",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 26,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A VALUE ASSIGNED BASED ON A BATCH IDENTIFICATION IN ORDER TO TRACE IT BACK TO ITS ORIGINAL SOURCE. IT WILL ONLY BE POPULATED WHEN A RECORD IS INSERTED.",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "META_LTST_SRC_PRCSG_ID",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 27,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A VALUE ASSIGNED BASED ON A BATCH IDENTIFICATION IN ORDER TO TRACE IT BACK TO ITS ORIGINAL SOURCE. IT WILL ONLY BE POPULATED WHEN A RECORD IS SUBSEQUENTLY UPDATED.",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "IDR_INSRT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 28,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHILE PERFORMING AN INSERT OPERATION.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        },  
+        {  
+          "column_name": "IDR_UPDT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 29,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHEN UPDATES ARE MADE TO ANY NON-PRIMARY KEY COLUMN.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        }  
+      ]  
+    },  
+    {  
+      "database": "IDRC_PRD",  
+      "schema": "CMS_VDM_VIEW_MDCR_PRD",  
+      "table_name": "V2_PRVDR_ENMRT_LCNS_CRNT",  
+      "table_type": "VIEW",  
+      "columns": [  
+        {  
+          "column_name": "PRVDR_NPI_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 1,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A NATIONAL PROVIDER IDENTIFIER (NPI) UNIQUELY ASSIGNED FOR COVERED HEALTH CARE PROVIDERS.",  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 2,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A NUMBER ASSIGNED BY A STATE OR TERRITORY TO AN INDIVIDUAL PROVIDER CERTIFYING THE PERSONS ABILITY TO PRACTICE MEDICINE WITHIN A RANGE OF SPECIALIZATIONS.",  
+          "character_maximum_length": 20,  
+          "type_description": "TEXT(20)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_USPS_STATE_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 3,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A CODE IDENTIFYING THE TWO-CHARACTER UNITED STATES POSTAL SERVICE (USPS) ALPHABETIC ABBREVIATION FOR THE ISSUING STATE OF THE LICENSE NUMBER.      REFERENCE TABLE:  GEO_USPS_STATE_CD",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "META_SRC_SK",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 4,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A UNIQUE NUMERIC VALUE ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) USED TO IDENTIFY THE SPECIFIC SOURCE OF THE DATA WHEN A ROW IS LOADED INTO THE IDR.    REFERENCE TABLE: V2_MDCR_META_DCTNRY_SRC",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "META_SRC_PRCSG_ID",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 5,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A VALUE ASSIGNED BASED ON A BATCH IDENTIFICATION IN ORDER TO TRACE IT BACK TO ITS ORIGINAL SOURCE. IT WILL ONLY BE POPULATED WHEN A RECORD IS INSERTED.",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "META_LTST_SRC_PRCSG_ID",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 6,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A VALUE ASSIGNED BASED ON A BATCH IDENTIFICATION IN ORDER TO TRACE IT BACK TO ITS ORIGINAL SOURCE. IT WILL ONLY BE POPULATED WHEN A RECORD IS SUBSEQUENTLY UPDATED.",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "IDR_INSRT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 7,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHILE PERFORMING AN INSERT OPERATION.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        },  
+        {  
+          "column_name": "IDR_UPDT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 8,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHEN UPDATES ARE MADE TO ANY NON-PRIMARY KEY COLUMN.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        }  
+      ]  
+    },  
+    {  
+      "database": "IDRC_PRD",  
+      "schema": "CMS_VDM_VIEW_MDCR_PRD",  
+      "table_name": "V2_PRVDR_ENMRT_LCNS_HSTRY",  
+      "table_type": "VIEW",  
+      "columns": [  
+        {  
+          "column_name": "PRVDR_NPI_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 1,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A NATIONAL PROVIDER IDENTIFIER (NPI) UNIQUELY ASSIGNED FOR COVERED HEALTH CARE PROVIDERS.",  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 2,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A NUMBER ASSIGNED BY A STATE OR TERRITORY TO AN INDIVIDUAL PROVIDER CERTIFYING THE PERSONS ABILITY TO PRACTICE MEDICINE WITHIN A RANGE OF SPECIALIZATIONS.",  
+          "character_maximum_length": 20,  
+          "type_description": "TEXT(20)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_USPS_STATE_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 3,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A CODE IDENTIFYING THE TWO-CHARACTER UNITED STATES POSTAL SERVICE (USPS) ALPHABETIC ABBREVIATION FOR THE ISSUING STATE OF THE LICENSE NUMBER.      REFERENCE TABLE:  GEO_USPS_STATE_CD",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "IDR_TRANS_EFCTV_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 4,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) IDENTIFYING WHEN A RECORD IS LOADED.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        },  
+        {  
+          "column_name": "IDR_TRANS_OBSLT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 5,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHEN A RECORD WAS LAST KNOWN TO BE PRESENT IN THE SOURCE. THE CURRENT VERSION OF A RECORD WILL BE SET TO 12/31/9999 00:00:00.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        },  
+        {  
+          "column_name": "IDR_LTST_TRANS_FLG",  
+          "data_type": "TEXT",  
+          "ordinal_position": 6,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "AN INDICATOR ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) THAT IDENTIFIES WHICH TRANSACTION RECORD, BASED ON PRIMARY KEY, IS CONSIDERED TO REPRESENT THE MOST RECENT RECORD RECEIVED FROM THE SOURCE.    Y = LATEST VERSION OF THE RECORD  N = PREVIOUS VERSION OF THE RECORD",  
+          "character_maximum_length": 1,  
+          "type_description": "TEXT(1)"  
+        },  
+        {  
+          "column_name": "META_SRC_SK",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 7,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A UNIQUE NUMERIC VALUE ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) USED TO IDENTIFY THE SPECIFIC SOURCE OF THE DATA WHEN A ROW IS LOADED INTO THE IDR.    REFERENCE TABLE: V2_MDCR_META_DCTNRY_SRC",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "META_SRC_PRCSG_ID",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 8,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A VALUE ASSIGNED BASED ON A BATCH IDENTIFICATION IN ORDER TO TRACE IT BACK TO ITS ORIGINAL SOURCE. IT WILL ONLY BE POPULATED WHEN A RECORD IS INSERTED.",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "META_LTST_SRC_PRCSG_ID",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 9,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A VALUE ASSIGNED BASED ON A BATCH IDENTIFICATION IN ORDER TO TRACE IT BACK TO ITS ORIGINAL SOURCE. IT WILL ONLY BE POPULATED WHEN A RECORD IS SUBSEQUENTLY UPDATED.",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "IDR_INSRT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 10,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHILE PERFORMING AN INSERT OPERATION.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        },  
+        {  
+          "column_name": "IDR_UPDT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 11,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHEN UPDATES ARE MADE TO ANY NON-PRIMARY KEY COLUMN.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        }  
+      ]  
+    },  
+    {  
+      "database": "IDRC_PRD",  
+      "schema": "CMS_VDM_VIEW_MDCR_PRD",  
+      "table_name": "V2_PRVDR_ENMRT_LCNS_MTRLZD_CRNT",  
+      "table_type": "VIEW",  
+      "columns": [  
+        {  
+          "column_name": "PRVDR_NPI_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 1,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A NATIONAL PROVIDER IDENTIFIER (NPI) UNIQUELY ASSIGNED FOR COVERED HEALTH CARE PROVIDERS.",  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_1_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 2,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A NUMBER ASSIGNED BY A STATE OR TERRITORY TO AN INDIVIDUAL PROVIDER CERTIFYING THE PERSONS ABILITY TO PRACTICE MEDICINE WITHIN A RANGE OF SPECIALIZ",  
+          "character_maximum_length": 16777216,  
+          "type_description": "TEXT(16777216)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_1_USPS_STATE_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 3,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A CODE IDENTIFYING THE TWO-CHARACTER UNITED STATES POSTAL SERVICE (USPS) ALPHABETIC ABBREVIATION FOR THE ISSUING STATE OF THE LICENSE NUMBER.",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_2_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 4,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A SECOND NUMBER ASSIGNED BY A STATE OR TERRITORY TO AN INDIVIDUAL PROVIDER CERTIFYING THE PERSONS ABILITY TO PRACTICE MEDICINE WITHIN A RANGE OF SPECIALIZ",  
+          "character_maximum_length": 16777216,  
+          "type_description": "TEXT(16777216)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_2_USPS_STATE_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 5,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A CODE IDENTIFYING THE TWO-CHARACTER UNITED STATES POSTAL SERVICE (USPS) ALPHABETIC ABBREVIATION FOR THE ISSUING STATE OF THE SECOND LICENSE NUMBER.",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_3_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 6,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A THIRD NUMBER ASSIGNED BY A STATE OR TERRITORY TO AN INDIVIDUAL PROVIDER CERTIFYING THE PERSONS ABILITY TO PRACTICE MEDICINE WITHIN A RANGE OF SPECIALIZ",  
+          "character_maximum_length": 16777216,  
+          "type_description": "TEXT(16777216)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_3_USPS_STATE_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 7,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A CODE IDENTIFYING THE TWO-CHARACTER UNITED STATES POSTAL SERVICE (USPS) ALPHABETIC ABBREVIATION FOR THE ISSUING STATE OF THE THIRD LICENSE NUMBER.",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_4_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 8,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A FOURTH NUMBER ASSIGNED BY A STATE OR TERRITORY TO AN INDIVIDUAL PROVIDER CERTIFYING THE PERSONS ABILITY TO PRACTICE MEDICINE WITHIN A RANGE OF SPECIALIZ",  
+          "character_maximum_length": 16777216,  
+          "type_description": "TEXT(16777216)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_4_USPS_STATE_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 9,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A CODE IDENTIFYING THE TWO-CHARACTER UNITED STATES POSTAL SERVICE (USPS) ALPHABETIC ABBREVIATION FOR THE ISSUING STATE OF THE FOURTH LICENSE NUMBER.",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_5_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 10,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A FIFTH NUMBER ASSIGNED BY A STATE OR TERRITORY TO AN INDIVIDUAL PROVIDER CERTIFYING THE PERSONS ABILITY TO PRACTICE MEDICINE WITHIN A RANGE OF SPECIALIZ",  
+          "character_maximum_length": 16777216,  
+          "type_description": "TEXT(16777216)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_5_USPS_STATE_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 11,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A CODE IDENTIFYING THE TWO-CHARACTER UNITED STATES POSTAL SERVICE (USPS) ALPHABETIC ABBREVIATION FOR THE ISSUING STATE OF THE FIFTH LICENSE NUMBER.",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_6_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 12,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A SIXTH NUMBER ASSIGNED BY A STATE OR TERRITORY TO AN INDIVIDUAL PROVIDER CERTIFYING THE PERSONS ABILITY TO PRACTICE MEDICINE WITHIN A RANGE OF SPECIALIZ",  
+          "character_maximum_length": 16777216,  
+          "type_description": "TEXT(16777216)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_6_USPS_STATE_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 13,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A CODE IDENTIFYING THE TWO-CHARACTER UNITED STATES POSTAL SERVICE (USPS) ALPHABETIC ABBREVIATION FOR THE ISSUING STATE OF THE SIXTH LICENSE NUMBER.",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_7_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 14,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A SEVENTH NUMBER ASSIGNED BY A STATE OR TERRITORY TO AN INDIVIDUAL PROVIDER CERTIFYING THE PERSONS ABILITY TO PRACTICE MEDICINE WITHIN A RANGE OF SPECIALIZ",  
+          "character_maximum_length": 16777216,  
+          "type_description": "TEXT(16777216)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_7_USPS_STATE_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 15,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A CODE IDENTIFYING THE TWO-CHARACTER UNITED STATES POSTAL SERVICE (USPS) ALPHABETIC ABBREVIATION FOR THE ISSUING STATE OF THE SEVENTH LICENSE NUMBER.",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_8_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 16,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "AN EIGTH NUMBER ASSIGNED BY A STATE OR TERRITORY TO AN INDIVIDUAL PROVIDER CERTIFYING THE PERSONS ABILITY TO PRACTICE MEDICINE WITHIN A RANGE OF SPECIALIZ",  
+          "character_maximum_length": 16777216,  
+          "type_description": "TEXT(16777216)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_8_USPS_STATE_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 17,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A CODE IDENTIFYING THE TWO-CHARACTER UNITED STATES POSTAL SERVICE (USPS) ALPHABETIC ABBREVIATION FOR THE ISSUING STATE OF THE EIGTH LICENSE NUMBER.",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_9_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 18,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A NINTH NUMBER ASSIGNED BY A STATE OR TERRITORY TO AN INDIVIDUAL PROVIDER CERTIFYING THE PERSONS ABILITY TO PRACTICE MEDICINE WITHIN A RANGE OF SPECIALIZ",  
+          "character_maximum_length": 16777216,  
+          "type_description": "TEXT(16777216)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_9_USPS_STATE_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 19,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A CODE IDENTIFYING THE TWO-CHARACTER UNITED STATES POSTAL SERVICE (USPS) ALPHABETIC ABBREVIATION FOR THE ISSUING STATE OF THE NINTH LICENSE NUMBER.",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_10_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 20,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A TENTH NUMBER ASSIGNED BY A STATE OR TERRITORY TO AN INDIVIDUAL PROVIDER CERTIFYING THE PERSONS ABILITY TO PRACTICE MEDICINE WITHIN A RANGE OF SPECIALIZ",  
+          "character_maximum_length": 16777216,  
+          "type_description": "TEXT(16777216)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_10_USPS_STATE_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 21,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A CODE IDENTIFYING THE TWO-CHARACTER UNITED STATES POSTAL SERVICE (USPS) ALPHABETIC ABBREVIATION FOR THE ISSUING STATE OF THE TENTH LICENSE NUMBER.",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_11_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 22,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "AN EVELENTH NUMBER ASSIGNED BY A STATE OR TERRITORY TO AN INDIVIDUAL PROVIDER CERTIFYING THE PERSONS ABILITY TO PRACTICE MEDICINE WITHIN A RANGE OF SPECIALIZ",  
+          "character_maximum_length": 16777216,  
+          "type_description": "TEXT(16777216)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_11_USPS_STATE_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 23,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A CODE IDENTIFYING THE TWO-CHARACTER UNITED STATES POSTAL SERVICE (USPS) ALPHABETIC ABBREVIATION FOR THE ISSUING STATE OF THE EVELENTH LICENSE NUMBER.",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_12_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 24,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A TWELFTH NUMBER ASSIGNED BY A STATE OR TERRITORY TO AN INDIVIDUAL PROVIDER CERTIFYING THE PERSONS ABILITY TO PRACTICE MEDICINE WITHIN A RANGE OF SPECIALIZ",  
+          "character_maximum_length": 16777216,  
+          "type_description": "TEXT(16777216)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_12_USPS_STATE_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 25,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A CODE IDENTIFYING THE TWO-CHARACTER UNITED STATES POSTAL SERVICE (USPS) ALPHABETIC ABBREVIATION FOR THE ISSUING STATE OF THE TWELFTH LICENSE NUMBER.",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_13_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 26,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A THIRTEENTH NUMBER ASSIGNED BY A STATE OR TERRITORY TO AN INDIVIDUAL PROVIDER CERTIFYING THE PERSONS ABILITY TO PRACTICE MEDICINE WITHIN A RANGE OF SPECIALIZ",  
+          "character_maximum_length": 16777216,  
+          "type_description": "TEXT(16777216)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_13_USPS_STATE_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 27,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A CODE IDENTIFYING THE TWO-CHARACTER UNITED STATES POSTAL SERVICE (USPS) ALPHABETIC ABBREVIATION FOR THE ISSUING STATE OF THE THIRTEENTH LICENSE NUMBER.",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_14_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 28,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A FOURTEENTH NUMBER ASSIGNED BY A STATE OR TERRITORY TO AN INDIVIDUAL PROVIDER CERTIFYING THE PERSONS ABILITY TO PRACTICE MEDICINE WITHIN A RANGE OF SPECIALIZ",  
+          "character_maximum_length": 16777216,  
+          "type_description": "TEXT(16777216)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_14_USPS_STATE_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 29,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A CODE IDENTIFYING THE TWO-CHARACTER UNITED STATES POSTAL SERVICE (USPS) ALPHABETIC ABBREVIATION FOR THE ISSUING STATE OF THE FOURTEENTH LICENSE NUMBER.",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_15_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 30,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A FIFTEENTH NUMBER ASSIGNED BY A STATE OR TERRITORY TO AN INDIVIDUAL PROVIDER CERTIFYING THE PERSONS ABILITY TO PRACTICE MEDICINE WITHIN A RANGE OF SPECIALIZ",  
+          "character_maximum_length": 16777216,  
+          "type_description": "TEXT(16777216)"  
+        },  
+        {  
+          "column_name": "PRVDR_LCNS_15_USPS_STATE_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 31,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A CODE IDENTIFYING THE TWO-CHARACTER UNITED STATES POSTAL SERVICE (USPS) ALPHABETIC ABBREVIATION FOR THE ISSUING STATE OF THE FIFTEENTH LICENSE NUMBER.",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "META_SRC_SK",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 32,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": null,  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        }  
+      ]  
+    },  
+    {  
+      "database": "IDRC_PRD",  
+      "schema": "CMS_VDM_VIEW_MDCR_PRD",  
+      "table_name": "V2_PRVDR_ENMRT_NAME_HSTRY",  
+      "table_type": "VIEW",  
+      "columns": [  
+        {  
+          "column_name": "PRVDR_NPI_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 1,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A NATIONAL PROVIDER IDENTIFIER (NPI) UNIQUELY ASSIGNED FOR COVERED HEALTH CARE PROVIDERS.",  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "NAME_ROLE_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 2,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "AN INTEGRATED DATA REPOSITORY (IDR) DERIVED CODE IDENTIFYING THE ROLE TYPE FOR A NAME SENT .    REFERENCE TABLE:  NAME_ROLE_CD",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "NAME_ROLE_DESC",  
+          "data_type": "TEXT",  
+          "ordinal_position": 3,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A DESCRIPTION OF A CODE IDENTIFYING THE ROLE TYPE FOR A NAME SENT.",  
+          "character_maximum_length": 500,  
+          "type_description": "TEXT(500)"  
+        },  
+        {  
+          "column_name": "NAME_TYPE_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 4,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A CODE IDENTIFYING  ANOTHER TYPE OF NAME USED.    REFERENCE TABLE:  NAME_TYPE_CD",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "NAME_TYPE_DESC",  
+          "data_type": "TEXT",  
+          "ordinal_position": 5,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A DESCRIPTION OF A CODE IDENTIFYING ANOTHER TYPE OF NAME USED.",  
+          "character_maximum_length": 500,  
+          "type_description": "TEXT(500)"  
+        },  
+        {  
+          "column_name": "IDR_TRANS_EFCTV_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 6,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) IDENTIFYING WHEN A RECORD IS LOADED.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        },  
+        {  
+          "column_name": "IDR_TRANS_OBSLT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 7,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHEN A RECORD WAS LAST KNOWN TO BE PRESENT IN THE SOURCE. THE CURRENT VERSION OF A RECORD WILL BE SET TO 12/31/9999 00:00:00.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        },  
+        {  
+          "column_name": "IDR_LTST_TRANS_FLG",  
+          "data_type": "TEXT",  
+          "ordinal_position": 8,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "AN INDICATOR ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) THAT IDENTIFIES WHICH TRANSACTION RECORD, BASED ON PRIMARY KEY, IS CONSIDERED TO REPRESENT THE MOST RECENT RECORD RECEIVED FROM THE SOURCE.    Y = LATEST VERSION OF THE RECORD  N = PREVIOUS VERSION OF THE RECORD",  
+          "character_maximum_length": 1,  
+          "type_description": "TEXT(1)"  
+        },  
+        {  
+          "column_name": "PRVDR_PREX_NAME",  
+          "data_type": "TEXT",  
+          "ordinal_position": 9,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A DESIGNATION INDICATING EITHER THE SEX OR MARITAL STATUS OF THE INDIVIDUAL.",  
+          "character_maximum_length": 20,  
+          "type_description": "TEXT(20)"  
+        },  
+        {  
+          "column_name": "PRVDR_1ST_NAME",  
+          "data_type": "TEXT",  
+          "ordinal_position": 10,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A PERSONAL NAME THAT IDENTIFIES THE INDIVIDUAL THAT PRECEDES THE LAST NAME.",  
+          "character_maximum_length": 35,  
+          "type_description": "TEXT(35)"  
+        },  
+        {  
+          "column_name": "PRVDR_MDL_NAME",  
+          "data_type": "TEXT",  
+          "ordinal_position": 11,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A PERSONAL NAME THAT IDENTIFIES THE INDIVIDUAL THAT IS PLACED AFTER THE FIRST NAME AND BEFORE THE SURNAME",  
+          "character_maximum_length": 20,  
+          "type_description": "TEXT(20)"  
+        },  
+        {  
+          "column_name": "PRVDR_LAST_NAME",  
+          "data_type": "TEXT",  
+          "ordinal_position": 12,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A SURNAME OF THE INDIVIDUAL.",  
+          "character_maximum_length": 35,  
+          "type_description": "TEXT(35)"  
+        },  
+        {  
+          "column_name": "PRVDR_SFX_NAME",  
+          "data_type": "TEXT",  
+          "ordinal_position": 13,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "AN IDENTIFIER OF A PHRASE AT THE END OF A NAME THAT FURTHER DESCRIBES AN INDIVIDUAL, E.G.JR, SR, ETC.",  
+          "character_maximum_length": 20,  
+          "type_description": "TEXT(20)"  
+        },  
+        {  
+          "column_name": "ORG_NAME",  
+          "data_type": "TEXT",  
+          "ordinal_position": 14,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "AN OFFICIAL NAME UNDER WHICH A BUSINESS OPERATES AND HOLDS ITSELF OUT TO THE PUBLIC.",  
+          "character_maximum_length": 100,  
+          "type_description": "TEXT(100)"  
+        },  
+        {  
+          "column_name": "CRDNTL_TXT",  
+          "data_type": "TEXT",  
+          "ordinal_position": 15,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A UNIQUE VALUE IDENTIFYING A QUALIFICATION, ACHIEVEMENT, QUALITY, OR ASPECT OF A PERSONS BACKGROUND, ESPECIALLY WHEN USED TO INDICATE THEIR SUITABILITY FOR SOMETHING.",  
+          "character_maximum_length": 20,  
+          "type_description": "TEXT(20)"  
+        },  
+        {  
+          "column_name": "META_SRC_SK",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 16,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A UNIQUE NUMERIC VALUE ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) USED TO IDENTIFY THE SPECIFIC SOURCE OF THE DATA WHEN A ROW IS LOADED INTO THE IDR.    REFERENCE TABLE: V2_MDCR_META_DCTNRY_SRC",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "META_SRC_PRCSG_ID",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 17,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A VALUE ASSIGNED BASED ON A BATCH IDENTIFICATION IN ORDER TO TRACE IT BACK TO ITS ORIGINAL SOURCE. IT WILL ONLY BE POPULATED WHEN A RECORD IS INSERTED.",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "META_LTST_SRC_PRCSG_ID",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 18,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A VALUE ASSIGNED BASED ON A BATCH IDENTIFICATION IN ORDER TO TRACE IT BACK TO ITS ORIGINAL SOURCE. IT WILL ONLY BE POPULATED WHEN A RECORD IS SUBSEQUENTLY UPDATED.",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "IDR_INSRT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 19,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHILE PERFORMING AN INSERT OPERATION.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        },  
+        {  
+          "column_name": "IDR_UPDT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 20,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHEN UPDATES ARE MADE TO ANY NON-PRIMARY KEY COLUMN.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        }  
+      ]  
+    },  
+    {  
+      "database": "IDRC_PRD",  
+      "schema": "CMS_VDM_VIEW_MDCR_PRD",  
+      "table_name": "V2_PRVDR_ENMRT_OTHR_NAME_CRNT",  
+      "table_type": "VIEW",  
+      "columns": [  
+        {  
+          "column_name": "PRVDR_NPI_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 1,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A NATIONAL PROVIDER IDENTIFIER (NPI) UNIQUELY ASSIGNED FOR COVERED HEALTH CARE PROVIDERS.",  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "NAME_ROLE_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 2,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "AN INTEGRATED DATA REPOSITORY (IDR) DERIVED CODE IDENTIFYING THE ROLE TYPE FOR A NAME SENT .    REFERENCE TABLE:  NAME_ROLE_CD",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "NAME_ROLE_DESC",  
+          "data_type": "TEXT",  
+          "ordinal_position": 3,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A DESCRIPTION OF A CODE IDENTIFYING THE ROLE TYPE FOR A NAME SENT.",  
+          "character_maximum_length": 500,  
+          "type_description": "TEXT(500)"  
+        },  
+        {  
+          "column_name": "NAME_TYPE_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 4,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A CODE IDENTIFYING  ANOTHER TYPE OF NAME USED.    REFERENCE TABLE:  NAME_TYPE_CD",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "NAME_TYPE_DESC",  
+          "data_type": "TEXT",  
+          "ordinal_position": 5,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A DESCRIPTION OF A CODE IDENTIFYING ANOTHER TYPE OF NAME USED.",  
+          "character_maximum_length": 500,  
+          "type_description": "TEXT(500)"  
+        },  
+        {  
+          "column_name": "PRVDR_PREX_NAME",  
+          "data_type": "TEXT",  
+          "ordinal_position": 6,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A DESIGNATION INDICATING EITHER THE SEX OR MARITAL STATUS OF THE INDIVIDUAL.",  
+          "character_maximum_length": 20,  
+          "type_description": "TEXT(20)"  
+        },  
+        {  
+          "column_name": "PRVDR_1ST_NAME",  
+          "data_type": "TEXT",  
+          "ordinal_position": 7,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A PERSONAL NAME THAT IDENTIFIES THE INDIVIDUAL THAT PRECEDES THE LAST NAME.",  
+          "character_maximum_length": 35,  
+          "type_description": "TEXT(35)"  
+        },  
+        {  
+          "column_name": "PRVDR_MDL_NAME",  
+          "data_type": "TEXT",  
+          "ordinal_position": 8,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A PERSONAL NAME THAT IDENTIFIES THE INDIVIDUAL THAT IS PLACED AFTER THE FIRST NAME AND BEFORE THE SURNAME",  
+          "character_maximum_length": 20,  
+          "type_description": "TEXT(20)"  
+        },  
+        {  
+          "column_name": "PRVDR_LAST_NAME",  
+          "data_type": "TEXT",  
+          "ordinal_position": 9,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A SURNAME OF THE INDIVIDUAL.",  
+          "character_maximum_length": 35,  
+          "type_description": "TEXT(35)"  
+        },  
+        {  
+          "column_name": "PRVDR_SFX_NAME",  
+          "data_type": "TEXT",  
+          "ordinal_position": 10,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "AN IDENTIFIER OF A PHRASE AT THE END OF A NAME THAT FURTHER DESCRIBES AN INDIVIDUAL, E.G.JR, SR, ETC.",  
+          "character_maximum_length": 20,  
+          "type_description": "TEXT(20)"  
+        },  
+        {  
+          "column_name": "ORG_NAME",  
+          "data_type": "TEXT",  
+          "ordinal_position": 11,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "AN OFFICIAL NAME UNDER WHICH A BUSINESS OPERATES AND HOLDS ITSELF OUT TO THE PUBLIC.",  
+          "character_maximum_length": 100,  
+          "type_description": "TEXT(100)"  
+        },  
+        {  
+          "column_name": "CRDNTL_TXT",  
+          "data_type": "TEXT",  
+          "ordinal_position": 12,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A UNIQUE VALUE IDENTIFYING A QUALIFICATION, ACHIEVEMENT, QUALITY, OR ASPECT OF A PERSONS BACKGROUND, ESPECIALLY WHEN USED TO INDICATE THEIR SUITABILITY FOR SOMETHING.",  
+          "character_maximum_length": 20,  
+          "type_description": "TEXT(20)"  
+        },  
+        {  
+          "column_name": "TITLE_NAME",  
+          "data_type": "TEXT",  
+          "ordinal_position": 13,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A DESIGNATION ASSOCIATED WITH THE INDIVIDUAL.",  
+          "character_maximum_length": 35,  
+          "type_description": "TEXT(35)"  
+        },  
+        {  
+          "column_name": "PHNE_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 14,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A NUMBER THAT REPRESENTS THE TELEPHONE NUMBER OF THE ENTITY OR PERSON.",  
+          "character_maximum_length": 20,  
+          "type_description": "TEXT(20)"  
+        },  
+        {  
+          "column_name": "PHNE_EXTNSN_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 15,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A 5 DIGIT NUMBER IN ADDITION TO THE TELEPHONE NUMBER OF THE ENTITY OR PERSON.",  
+          "character_maximum_length": 5,  
+          "type_description": "TEXT(5)"  
+        },  
+        {  
+          "column_name": "EMAIL_ADR",  
+          "data_type": "TEXT",  
+          "ordinal_position": 16,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "AN ELECTRONIC MAILING ADDRESS USED TO ELECTRONICALLY COMMUNICATE WITH THE ENTITY OR PERSON.",  
+          "character_maximum_length": 100,  
+          "type_description": "TEXT(100)"  
+        },  
+        {  
+          "column_name": "META_SRC_SK",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 17,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A UNIQUE NUMERIC VALUE ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) USED TO IDENTIFY THE SPECIFIC SOURCE OF THE DATA WHEN A ROW IS LOADED INTO THE IDR.    REFERENCE TABLE: V2_MDCR_META_DCTNRY_SRC",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "META_SRC_PRCSG_ID",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 18,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A VALUE ASSIGNED BASED ON A BATCH IDENTIFICATION IN ORDER TO TRACE IT BACK TO ITS ORIGINAL SOURCE. IT WILL ONLY BE POPULATED WHEN A RECORD IS INSERTED.",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "META_LTST_SRC_PRCSG_ID",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 19,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A VALUE ASSIGNED BASED ON A BATCH IDENTIFICATION IN ORDER TO TRACE IT BACK TO ITS ORIGINAL SOURCE. IT WILL ONLY BE POPULATED WHEN A RECORD IS SUBSEQUENTLY UPDATED.",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "IDR_INSRT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 20,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHILE PERFORMING AN INSERT OPERATION.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        },  
+        {  
+          "column_name": "IDR_UPDT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 21,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHEN UPDATES ARE MADE TO ANY NON-PRIMARY KEY COLUMN.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        }  
+      ]  
+    },  
+    {  
+      "database": "IDRC_PRD",  
+      "schema": "CMS_VDM_VIEW_MDCR_PRD",  
+      "table_name": "V2_PRVDR_ENMRT_OTHR_NAME_HSTRY",  
+      "table_type": "VIEW",  
+      "columns": [  
+        {  
+          "column_name": "PRVDR_NPI_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 1,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A NATIONAL PROVIDER IDENTIFIER (NPI) UNIQUELY ASSIGNED FOR COVERED HEALTH CARE PROVIDERS.",  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "NAME_ROLE_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 2,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "AN INTEGRATED DATA REPOSITORY (IDR) DERIVED CODE IDENTIFYING THE ROLE TYPE FOR A NAME SENT .    REFERENCE TABLE:  NAME_ROLE_CD",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "NAME_ROLE_DESC",  
+          "data_type": "TEXT",  
+          "ordinal_position": 3,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A DESCRIPTION OF A CODE IDENTIFYING THE ROLE TYPE FOR A NAME SENT.",  
+          "character_maximum_length": 500,  
+          "type_description": "TEXT(500)"  
+        },  
+        {  
+          "column_name": "NAME_TYPE_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 4,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A CODE IDENTIFYING  ANOTHER TYPE OF NAME USED.    REFERENCE TABLE:  NAME_TYPE_CD",  
+          "character_maximum_length": 2,  
+          "type_description": "TEXT(2)"  
+        },  
+        {  
+          "column_name": "NAME_TYPE_DESC",  
+          "data_type": "TEXT",  
+          "ordinal_position": 5,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A DESCRIPTION OF A CODE IDENTIFYING ANOTHER TYPE OF NAME USED.",  
+          "character_maximum_length": 500,  
+          "type_description": "TEXT(500)"  
+        },  
+        {  
+          "column_name": "IDR_TRANS_EFCTV_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 6,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) IDENTIFYING WHEN A RECORD IS LOADED.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        },  
+        {  
+          "column_name": "IDR_TRANS_OBSLT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 7,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHEN A RECORD WAS LAST KNOWN TO BE PRESENT IN THE SOURCE. THE CURRENT VERSION OF A RECORD WILL BE SET TO 12/31/9999 00:00:00.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        },  
+        {  
+          "column_name": "IDR_LTST_TRANS_FLG",  
+          "data_type": "TEXT",  
+          "ordinal_position": 8,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "AN INDICATOR ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) THAT IDENTIFIES WHICH TRANSACTION RECORD, BASED ON PRIMARY KEY, IS CONSIDERED TO REPRESENT THE MOST RECENT RECORD RECEIVED FROM THE SOURCE.    Y = LATEST VERSION OF THE RECORD  N = PREVIOUS VERSION OF THE RECORD",  
+          "character_maximum_length": 1,  
+          "type_description": "TEXT(1)"  
+        },  
+        {  
+          "column_name": "PRVDR_PREX_NAME",  
+          "data_type": "TEXT",  
+          "ordinal_position": 9,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A DESIGNATION INDICATING EITHER THE SEX OR MARITAL STATUS OF THE INDIVIDUAL.",  
+          "character_maximum_length": 20,  
+          "type_description": "TEXT(20)"  
+        },  
+        {  
+          "column_name": "PRVDR_1ST_NAME",  
+          "data_type": "TEXT",  
+          "ordinal_position": 10,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A PERSONAL NAME THAT IDENTIFIES THE INDIVIDUAL THAT PRECEDES THE LAST NAME.",  
+          "character_maximum_length": 35,  
+          "type_description": "TEXT(35)"  
+        },  
+        {  
+          "column_name": "PRVDR_MDL_NAME",  
+          "data_type": "TEXT",  
+          "ordinal_position": 11,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A PERSONAL NAME THAT IDENTIFIES THE INDIVIDUAL THAT IS PLACED AFTER THE FIRST NAME AND BEFORE THE SURNAME",  
+          "character_maximum_length": 20,  
+          "type_description": "TEXT(20)"  
+        },  
+        {  
+          "column_name": "PRVDR_LAST_NAME",  
+          "data_type": "TEXT",  
+          "ordinal_position": 12,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A SURNAME OF THE INDIVIDUAL.",  
+          "character_maximum_length": 35,  
+          "type_description": "TEXT(35)"  
+        },  
+        {  
+          "column_name": "PRVDR_SFX_NAME",  
+          "data_type": "TEXT",  
+          "ordinal_position": 13,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "AN IDENTIFIER OF A PHRASE AT THE END OF A NAME THAT FURTHER DESCRIBES AN INDIVIDUAL, E.G.JR, SR, ETC.",  
+          "character_maximum_length": 20,  
+          "type_description": "TEXT(20)"  
+        },  
+        {  
+          "column_name": "ORG_NAME",  
+          "data_type": "TEXT",  
+          "ordinal_position": 14,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "AN OFFICIAL NAME UNDER WHICH A BUSINESS OPERATES AND HOLDS ITSELF OUT TO THE PUBLIC.",  
+          "character_maximum_length": 100,  
+          "type_description": "TEXT(100)"  
+        },  
+        {  
+          "column_name": "CRDNTL_TXT",  
+          "data_type": "TEXT",  
+          "ordinal_position": 15,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A UNIQUE VALUE IDENTIFYING A QUALIFICATION, ACHIEVEMENT, QUALITY, OR ASPECT OF A PERSONS BACKGROUND, ESPECIALLY WHEN USED TO INDICATE THEIR SUITABILITY FOR SOMETHING.",  
+          "character_maximum_length": 20,  
+          "type_description": "TEXT(20)"  
+        },  
+        {  
+          "column_name": "TITLE_NAME",  
+          "data_type": "TEXT",  
+          "ordinal_position": 16,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A DESIGNATION ASSOCIATED WITH THE INDIVIDUAL.",  
+          "character_maximum_length": 35,  
+          "type_description": "TEXT(35)"  
+        },  
+        {  
+          "column_name": "PHNE_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 17,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A NUMBER THAT REPRESENTS THE TELEPHONE NUMBER OF THE ENTITY OR PERSON.",  
+          "character_maximum_length": 20,  
+          "type_description": "TEXT(20)"  
+        },  
+        {  
+          "column_name": "PHNE_EXTNSN_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 18,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A 5 DIGIT NUMBER IN ADDITION TO THE TELEPHONE NUMBER OF THE ENTITY OR PERSON.",  
+          "character_maximum_length": 5,  
+          "type_description": "TEXT(5)"  
+        },  
+        {  
+          "column_name": "EMAIL_ADR",  
+          "data_type": "TEXT",  
+          "ordinal_position": 19,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "AN ELECTRONIC MAILING ADDRESS USED TO ELECTRONICALLY COMMUNICATE WITH THE ENTITY OR PERSON.",  
+          "character_maximum_length": 100,  
+          "type_description": "TEXT(100)"  
+        },  
+        {  
+          "column_name": "META_SRC_SK",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 20,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A UNIQUE NUMERIC VALUE ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) USED TO IDENTIFY THE SPECIFIC SOURCE OF THE DATA WHEN A ROW IS LOADED INTO THE IDR.    REFERENCE TABLE: V2_MDCR_META_DCTNRY_SRC",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "META_SRC_PRCSG_ID",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 21,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A VALUE ASSIGNED BASED ON A BATCH IDENTIFICATION IN ORDER TO TRACE IT BACK TO ITS ORIGINAL SOURCE. IT WILL ONLY BE POPULATED WHEN A RECORD IS INSERTED.",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "META_LTST_SRC_PRCSG_ID",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 22,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A VALUE ASSIGNED BASED ON A BATCH IDENTIFICATION IN ORDER TO TRACE IT BACK TO ITS ORIGINAL SOURCE. IT WILL ONLY BE POPULATED WHEN A RECORD IS SUBSEQUENTLY UPDATED.",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "IDR_INSRT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 23,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHILE PERFORMING AN INSERT OPERATION.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        },  
+        {  
+          "column_name": "IDR_UPDT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 24,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHEN UPDATES ARE MADE TO ANY NON-PRIMARY KEY COLUMN.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        }  
+      ]  
+    },  
+    {  
+      "database": "IDRC_PRD",  
+      "schema": "CMS_VDM_VIEW_MDCR_PRD",  
+      "table_name": "V2_PRVDR_ENMRT_RACE_ETHNCTY_CRNT",  
+      "table_type": "VIEW",  
+      "columns": [  
+        {  
+          "column_name": "PRVDR_NPI_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 1,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A NATIONAL PROVIDER IDENTIFIER (NPI) UNIQUELY ASSIGNED FOR COVERED HEALTH CARE PROVIDERS.",  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "RACE_ETHNCTY_CTGRY_CD_DESC",  
+          "data_type": "TEXT",  
+          "ordinal_position": 2,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A DESCRIPTION OF THE CODE IDENTIFYING THE OFFICE OF INFORMATION AND REGULATORY AFFAIRS, OFFICE OF MANAGEMENT AND BUDGET, EXECUTIVE OFFICE OF THE PRESIDENT (OMB) MINIMUM RACE OR ETHNICITY CATEGORY.",  
+          "character_maximum_length": 250,  
+          "type_description": "TEXT(250)"  
+        },  
+        {  
+          "column_name": "RACE_ETHNCTY_CD_DESC",  
+          "data_type": "TEXT",  
+          "ordinal_position": 3,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A DESCRIPTION OF THE CODE IDENTIFYING AN INDIVIDUAL'S RACE OR ETHNICITY. THE DESCRIPTIONS FOLLOW GUIDANCE FROM THE OFFICE OF INFORMATION AND REGULATORY AFFAIRS, OFFICE OF MANAGEMENT AND BUDGET, EXECUTIVE OFFICE OF THE PRESIDENT (OMB).",  
+          "character_maximum_length": 250,  
+          "type_description": "TEXT(250)"  
+        },  
+        {  
+          "column_name": "META_SRC_SK",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 4,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A UNIQUE NUMERIC VALUE ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) USED TO IDENTIFY THE SPECIFIC SOURCE OF THE DATA WHEN A ROW IS LOADED INTO THE IDR.\n\nREFERENCE TABLE: V2_MDCR_META_DCTNRY_SRC",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "META_SRC_PRCSG_ID",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 5,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A VALUE ASSIGNED BASED ON A BATCH IDENTIFICATION IN ORDER TO TRACE IT BACK TO ITS ORIGINAL SOURCE. IT WILL ONLY BE POPULATED WHEN A RECORD IS INSERTED.",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "META_LTST_SRC_PRCSG_ID",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 6,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A VALUE ASSIGNED BASED ON A BATCH IDENTIFICATION IN ORDER TO TRACE IT BACK TO ITS ORIGINAL SOURCE. IT WILL ONLY BE POPULATED WHEN A RECORD IS SUBSEQUENTLY UPDATED.",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "IDR_INSRT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 7,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHILE PERFORMING AN INSERT OPERATION.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        },  
+        {  
+          "column_name": "IDR_UPDT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 8,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHEN UPDATES ARE MADE TO ANY NON-PRIMARY KEY COLUMN.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        }  
+      ]  
+    },  
+    {  
+      "database": "IDRC_PRD",  
+      "schema": "CMS_VDM_VIEW_MDCR_PRD",  
+      "table_name": "V2_PRVDR_ENMRT_RACE_ETHNCTY_HSTRY",  
+      "table_type": "VIEW",  
+      "columns": [  
+        {  
+          "column_name": "PRVDR_NPI_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 1,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A NATIONAL PROVIDER IDENTIFIER (NPI) UNIQUELY ASSIGNED FOR COVERED HEALTH CARE PROVIDERS.",  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "RACE_ETHNCTY_CTGRY_CD_DESC",  
+          "data_type": "TEXT",  
+          "ordinal_position": 2,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A DESCRIPTION OF THE CODE IDENTIFYING THE OFFICE OF INFORMATION AND REGULATORY AFFAIRS, OFFICE OF MANAGEMENT AND BUDGET, EXECUTIVE OFFICE OF THE PRESIDENT (OMB) MINIMUM RACE OR ETHNICITY CATEGORY.",  
+          "character_maximum_length": 250,  
+          "type_description": "TEXT(250)"  
+        },  
+        {  
+          "column_name": "RACE_ETHNCTY_CD_DESC",  
+          "data_type": "TEXT",  
+          "ordinal_position": 3,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A DESCRIPTION OF THE CODE IDENTIFYING AN INDIVIDUAL'S RACE OR ETHNICITY. THE DESCRIPTIONS FOLLOW GUIDANCE FROM THE OFFICE OF INFORMATION AND REGULATORY AFFAIRS, OFFICE OF MANAGEMENT AND BUDGET, EXECUTIVE OFFICE OF THE PRESIDENT (OMB).",  
+          "character_maximum_length": 250,  
+          "type_description": "TEXT(250)"  
+        },  
+        {  
+          "column_name": "IDR_TRANS_EFCTV_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 4,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) IDENTIFYING WHEN A RECORD IS LOADED.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        },  
+        {  
+          "column_name": "IDR_TRANS_OBSLT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 5,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHEN A RECORD WAS LAST KNOWN TO BE PRESENT IN THE SOURCE. THE CURRENT VERSION OF A RECORD WILL BE SET TO 12/31/9999 00:00:00.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        },  
+        {  
+          "column_name": "IDR_LTST_TRANS_FLG",  
+          "data_type": "TEXT",  
+          "ordinal_position": 6,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "AN INDICATOR ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) THAT IDENTIFIES WHICH TRANSACTION RECORD, BASED ON PRIMARY KEY, IS CONSIDERED TO REPRESENT THE MOST RECENT RECORD RECEIVED FROM THE SOURCE.\n\nY = LATEST VERSION OF THE RECORD\nN = PREVIOUS VERSION OF THE RECORD",  
+          "character_maximum_length": 1,  
+          "type_description": "TEXT(1)"  
+        },  
+        {  
+          "column_name": "META_SRC_SK",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 7,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A UNIQUE NUMERIC VALUE ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) USED TO IDENTIFY THE SPECIFIC SOURCE OF THE DATA WHEN A ROW IS LOADED INTO THE IDR.\n\nREFERENCE TABLE: V2_MDCR_META_DCTNRY_SRC",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "META_SRC_PRCSG_ID",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 8,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A VALUE ASSIGNED BASED ON A BATCH IDENTIFICATION IN ORDER TO TRACE IT BACK TO ITS ORIGINAL SOURCE. IT WILL ONLY BE POPULATED WHEN A RECORD IS INSERTED.",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "META_LTST_SRC_PRCSG_ID",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 9,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A VALUE ASSIGNED BASED ON A BATCH IDENTIFICATION IN ORDER TO TRACE IT BACK TO ITS ORIGINAL SOURCE. IT WILL ONLY BE POPULATED WHEN A RECORD IS SUBSEQUENTLY UPDATED.",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "IDR_INSRT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 10,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHILE PERFORMING AN INSERT OPERATION.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        },  
+        {  
+          "column_name": "IDR_UPDT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 11,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHEN UPDATES ARE MADE TO ANY NON-PRIMARY KEY COLUMN.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        }  
+      ]  
+    },  
+    {  
+      "database": "IDRC_PRD",  
+      "schema": "CMS_VDM_VIEW_MDCR_PRD",  
+      "table_name": "V2_PRVDR_ENMRT_SCNDRY_LANG_CRNT",  
+      "table_type": "VIEW",  
+      "columns": [  
+        {  
+          "column_name": "PRVDR_NPI_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 1,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A NATIONAL PROVIDER IDENTIFIER (NPI) UNIQUELY ASSIGNED FOR COVERED HEALTH CARE PROVIDERS.",  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "PRVDR_SCNDRY_LANG_TXT",  
+          "data_type": "TEXT",  
+          "ordinal_position": 2,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "THE SECONDARY LANGUAGE OF AN ENUMERATED HEALTH CARE PROVIDER.",  
+          "character_maximum_length": 100,  
+          "type_description": "TEXT(100)"  
+        },  
+        {  
+          "column_name": "META_SRC_SK",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 3,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A UNIQUE NUMERIC VALUE ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) USED TO IDENTIFY THE SPECIFIC SOURCE OF THE DATA WHEN A ROW IS LOADED INTO THE IDR.\n\nREFERENCE TABLE: V2_MDCR_META_DCTNRY_SRC",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "META_SRC_PRCSG_ID",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 4,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A VALUE ASSIGNED BASED ON A BATCH IDENTIFICATION IN ORDER TO TRACE IT BACK TO ITS ORIGINAL SOURCE. IT WILL ONLY BE POPULATED WHEN A RECORD IS INSERTED.",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "META_LTST_SRC_PRCSG_ID",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 5,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A VALUE ASSIGNED BASED ON A BATCH IDENTIFICATION IN ORDER TO TRACE IT BACK TO ITS ORIGINAL SOURCE. IT WILL ONLY BE POPULATED WHEN A RECORD IS SUBSEQUENTLY UPDATED.",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "IDR_INSRT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 6,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHILE PERFORMING AN INSERT OPERATION.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        },  
+        {  
+          "column_name": "IDR_UPDT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 7,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHEN UPDATES ARE MADE TO ANY NON-PRIMARY KEY COLUMN.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        }  
+      ]  
+    },  
+    {  
+      "database": "IDRC_PRD",  
+      "schema": "CMS_VDM_VIEW_MDCR_PRD",  
+      "table_name": "V2_PRVDR_ENMRT_SCNDRY_LANG_HSTRY",  
+      "table_type": "VIEW",  
+      "columns": [  
+        {  
+          "column_name": "PRVDR_NPI_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 1,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A NATIONAL PROVIDER IDENTIFIER (NPI) UNIQUELY ASSIGNED FOR COVERED HEALTH CARE PROVIDERS.",  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "PRVDR_SCNDRY_LANG_TXT",  
+          "data_type": "TEXT",  
+          "ordinal_position": 2,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "THE SECONDARY LANGUAGE OF AN ENUMERATED HEALTH CARE PROVIDER.",  
+          "character_maximum_length": 100,  
+          "type_description": "TEXT(100)"  
+        },  
+        {  
+          "column_name": "IDR_TRANS_EFCTV_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 3,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) IDENTIFYING WHEN A RECORD IS LOADED.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        },  
+        {  
+          "column_name": "IDR_TRANS_OBSLT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 4,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHEN A RECORD WAS LAST KNOWN TO BE PRESENT IN THE SOURCE. THE CURRENT VERSION OF A RECORD WILL BE SET TO 12/31/9999 00:00:00.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        },  
+        {  
+          "column_name": "IDR_LTST_TRANS_FLG",  
+          "data_type": "TEXT",  
+          "ordinal_position": 5,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "AN INDICATOR ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) THAT IDENTIFIES WHICH TRANSACTION RECORD, BASED ON PRIMARY KEY, IS CONSIDERED TO REPRESENT THE MOST RECENT RECORD RECEIVED FROM THE SOURCE.\n\nY = LATEST VERSION OF THE RECORD\nN = PREVIOUS VERSION OF THE RECORD",  
+          "character_maximum_length": 1,  
+          "type_description": "TEXT(1)"  
+        },  
+        {  
+          "column_name": "META_SRC_SK",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 6,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A UNIQUE NUMERIC VALUE ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) USED TO IDENTIFY THE SPECIFIC SOURCE OF THE DATA WHEN A ROW IS LOADED INTO THE IDR.\n\nREFERENCE TABLE: V2_MDCR_META_DCTNRY_SRC",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "META_SRC_PRCSG_ID",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 7,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A VALUE ASSIGNED BASED ON A BATCH IDENTIFICATION IN ORDER TO TRACE IT BACK TO ITS ORIGINAL SOURCE. IT WILL ONLY BE POPULATED WHEN A RECORD IS INSERTED.",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "META_LTST_SRC_PRCSG_ID",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 8,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A VALUE ASSIGNED BASED ON A BATCH IDENTIFICATION IN ORDER TO TRACE IT BACK TO ITS ORIGINAL SOURCE. IT WILL ONLY BE POPULATED WHEN A RECORD IS SUBSEQUENTLY UPDATED.",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "IDR_INSRT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 9,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHILE PERFORMING AN INSERT OPERATION.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        },  
+        {  
+          "column_name": "IDR_UPDT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 10,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHEN UPDATES ARE MADE TO ANY NON-PRIMARY KEY COLUMN.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        }  
+      ]  
+    },  
+    {  
+      "database": "IDRC_PRD",  
+      "schema": "CMS_VDM_VIEW_MDCR_PRD",  
+      "table_name": "V2_PRVDR_ENMRT_TXNMY_CRNT",  
+      "table_type": "VIEW",  
+      "columns": [  
+        {  
+          "column_name": "PRVDR_NPI_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 1,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A NATIONAL PROVIDER IDENTIFIER (NPI) UNIQUELY ASSIGNED FOR COVERED HEALTH CARE PROVIDERS.",  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "PRVDR_TXNMY_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 2,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A UNIQUE IDENTIFIER FOR A CLASSIFICATION OF HEALTH CARE SPECIALTY AT A SPECIALIZED LEVEL OF DEFINED MEDICAL ACTIVITY WITHIN A MEDICAL FIELD AS CREATED BY THE NATIONAL UNIFORM CLAIM COMMITTEE (NUCC). THIS CLASSIFICATION CONCEPTUALLY DEVOLVES INTO THE FOLLOWING HIERARCHY:    1. A TOP LEVEL THAT INDICATES IF THE CLASSIFICATION IS INDIVIDUAL GROUP OF INDIVIDUALS OR NON-INDIVIDUAL   2. A MANDATORY SECOND LEVEL THAT SHOWS A BROAD BUT DEFINED MEDICAL FIELD.           EXAMPLES FOR INDIVIDUALS INCLUDE: DENTAL PROVIDERS, ALLOPATHIC & OSTEOPATHIC PHYSICIANS  EXAMPLES FOR NON-INDIVIDUALS  INCLUDE: AGENCIES, HOSPITALS  3. A THIRD LEVEL THAT IS AT A MORE SPECIFIC LEVEL OF DEFINED MEDICAL ACTIVITY WITHIN A MEDICAL FIELD.  EXAMPLES FOR INDIVIDUALS INCLUDE: DENTAL PROVIDERSDENTAL HYGIENIST, ALLOPATHIC & OSTEOPATHIC, PHYSICIANSANESTHESIOLOGY  EXAMPLES FOR NON-INDIVIDUALS  INCLUDE: AGENCIESHOME HEALTH AGENCY, HOSPITALSGENERAL ACUTE CARE HOSPITAL  4. A FOURTH SPECIALIZED LEVEL OF DEFINED MEDICAL ACTIVITY WITHIN A MEDICAL FIELD.  EXAMPLES FOR INDIVIDUALS INCLUDE: ALLOPATHIC & OSTEOPATHIC PHYSICIANSANESTHESIOLOGYPAIN MEDICINE  EXAMPLES FOR NON-INDIVIDUALS  INCLUDE: HOSPITALSGENERAL ACUTE CARE HOSPITAL, ACUTE CARE HOSPITAL/CRITICAL ACCESS  [ELDM]    REFERENCE TABLE: V1_PRVDR_NCPDP_TXNMY_CD",  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "PRVDR_PRMRY_TXNMY_DSGNTN_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 3,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A CODE INDICATING IF A TAXONOMY CODE IS THE PRIMARY TAXONOMY CODE.    VALID VALUES:  Y = YES, THE TAXONOMY IS THE PRIMARY TAXONOMY (THERE CAN BE ONLY ONE PER NPI RECORD)   N = NO, THE TAXONOMY IS NOT THE PRIMARY TAXONOMY   X = NOT ANSWERED",  
+          "character_maximum_length": 1,  
+          "type_description": "TEXT(1)"  
+        },  
+        {  
+          "column_name": "META_SRC_SK",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 4,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A UNIQUE NUMERIC VALUE ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) USED TO IDENTIFY THE SPECIFIC SOURCE OF THE DATA WHEN A ROW IS LOADED INTO THE IDR.    REFERENCE TABLE: V2_MDCR_META_DCTNRY_SRC",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "META_SRC_PRCSG_ID",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 5,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A VALUE ASSIGNED BASED ON A BATCH IDENTIFICATION IN ORDER TO TRACE IT BACK TO ITS ORIGINAL SOURCE. IT WILL ONLY BE POPULATED WHEN A RECORD IS INSERTED.",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "META_LTST_SRC_PRCSG_ID",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 6,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A VALUE ASSIGNED BASED ON A BATCH IDENTIFICATION IN ORDER TO TRACE IT BACK TO ITS ORIGINAL SOURCE. IT WILL ONLY BE POPULATED WHEN A RECORD IS SUBSEQUENTLY UPDATED.",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "IDR_INSRT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 7,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHILE PERFORMING AN INSERT OPERATION.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        },  
+        {  
+          "column_name": "IDR_UPDT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 8,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHEN UPDATES ARE MADE TO ANY NON-PRIMARY KEY COLUMN.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        }  
+      ]  
+    },  
+    {  
+      "database": "IDRC_PRD",  
+      "schema": "CMS_VDM_VIEW_MDCR_PRD",  
+      "table_name": "V2_PRVDR_ENMRT_TXNMY_HSTRY",  
+      "table_type": "VIEW",  
+      "columns": [  
+        {  
+          "column_name": "PRVDR_NPI_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 1,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A NATIONAL PROVIDER IDENTIFIER (NPI) UNIQUELY ASSIGNED FOR COVERED HEALTH CARE PROVIDERS.",  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "PRVDR_TXNMY_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 2,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A UNIQUE IDENTIFIER FOR A CLASSIFICATION OF HEALTH CARE SPECIALTY AT A SPECIALIZED LEVEL OF DEFINED MEDICAL ACTIVITY WITHIN A MEDICAL FIELD AS CREATED BY THE NATIONAL UNIFORM CLAIM COMMITTEE (NUCC). THIS CLASSIFICATION CONCEPTUALLY DEVOLVES INTO THE FOLLOWING HIERARCHY:    1. A TOP LEVEL THAT INDICATES IF THE CLASSIFICATION IS INDIVIDUAL GROUP OF INDIVIDUALS OR NON-INDIVIDUAL   2. A MANDATORY SECOND LEVEL THAT SHOWS A BROAD BUT DEFINED MEDICAL FIELD.           EXAMPLES FOR INDIVIDUALS INCLUDE: DENTAL PROVIDERS, ALLOPATHIC & OSTEOPATHIC PHYSICIANS  EXAMPLES FOR NON-INDIVIDUALS  INCLUDE: AGENCIES, HOSPITALS  3. A THIRD LEVEL THAT IS AT A MORE SPECIFIC LEVEL OF DEFINED MEDICAL ACTIVITY WITHIN A MEDICAL FIELD.  EXAMPLES FOR INDIVIDUALS INCLUDE: DENTAL PROVIDERSDENTAL HYGIENIST, ALLOPATHIC & OSTEOPATHIC, PHYSICIANSANESTHESIOLOGY  EXAMPLES FOR NON-INDIVIDUALS  INCLUDE: AGENCIESHOME HEALTH AGENCY, HOSPITALSGENERAL ACUTE CARE HOSPITAL  4. A FOURTH SPECIALIZED LEVEL OF DEFINED MEDICAL ACTIVITY WITHIN A MEDICAL FIELD.  EXAMPLES FOR INDIVIDUALS INCLUDE: ALLOPATHIC & OSTEOPATHIC PHYSICIANSANESTHESIOLOGYPAIN MEDICINE  EXAMPLES FOR NON-INDIVIDUALS  INCLUDE: HOSPITALSGENERAL ACUTE CARE HOSPITAL, ACUTE CARE HOSPITAL/CRITICAL ACCESS  [ELDM]    REFERENCE TABLE: V1_PRVDR_NCPDP_TXNMY_CD",  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "IDR_TRANS_EFCTV_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 3,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) IDENTIFYING WHEN A RECORD IS LOADED.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        },  
+        {  
+          "column_name": "IDR_TRANS_OBSLT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 4,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHEN A RECORD WAS LAST KNOWN TO BE PRESENT IN THE SOURCE. THE CURRENT VERSION OF A RECORD WILL BE SET TO 12/31/9999 00:00:00.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        },  
+        {  
+          "column_name": "IDR_LTST_TRANS_FLG",  
+          "data_type": "TEXT",  
+          "ordinal_position": 5,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "AN INDICATOR ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) THAT IDENTIFIES WHICH TRANSACTION RECORD, BASED ON PRIMARY KEY, IS CONSIDERED TO REPRESENT THE MOST RECENT RECORD RECEIVED FROM THE SOURCE.    Y = LATEST VERSION OF THE RECORD  N = PREVIOUS VERSION OF THE RECORD",  
+          "character_maximum_length": 1,  
+          "type_description": "TEXT(1)"  
+        },  
+        {  
+          "column_name": "PRVDR_PRMRY_TXNMY_DSGNTN_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 6,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A CODE INDICATING IF A TAXONOMY CODE IS THE PRIMARY TAXONOMY CODE.    VALID VALUES:  Y = YES, THE TAXONOMY IS THE PRIMARY TAXONOMY (THERE CAN BE ONLY ONE PER NPI RECORD)   N = NO, THE TAXONOMY IS NOT THE PRIMARY TAXONOMY   X = NOT ANSWERED",  
+          "character_maximum_length": 1,  
+          "type_description": "TEXT(1)"  
+        },  
+        {  
+          "column_name": "META_SRC_SK",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 7,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A UNIQUE NUMERIC VALUE ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) USED TO IDENTIFY THE SPECIFIC SOURCE OF THE DATA WHEN A ROW IS LOADED INTO THE IDR.    REFERENCE TABLE: V2_MDCR_META_DCTNRY_SRC",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "META_SRC_PRCSG_ID",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 8,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "A VALUE ASSIGNED BASED ON A BATCH IDENTIFICATION IN ORDER TO TRACE IT BACK TO ITS ORIGINAL SOURCE. IT WILL ONLY BE POPULATED WHEN A RECORD IS INSERTED.",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "META_LTST_SRC_PRCSG_ID",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 9,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "A VALUE ASSIGNED BASED ON A BATCH IDENTIFICATION IN ORDER TO TRACE IT BACK TO ITS ORIGINAL SOURCE. IT WILL ONLY BE POPULATED WHEN A RECORD IS SUBSEQUENTLY UPDATED.",  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        },  
+        {  
+          "column_name": "IDR_INSRT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 10,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHILE PERFORMING AN INSERT OPERATION.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        },  
+        {  
+          "column_name": "IDR_UPDT_TS",  
+          "data_type": "TIMESTAMP_NTZ",  
+          "ordinal_position": 11,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": "THE SYSTEM DATE AND TIME ASSIGNED BY THE INTEGRATED DATA REPOSITORY (IDR) WHEN UPDATES ARE MADE TO ANY NON-PRIMARY KEY COLUMN.",  
+          "type_description": "TIMESTAMP_NTZ"  
+        }  
+      ]  
+    },  
+    {  
+      "database": "IDRC_PRD",  
+      "schema": "CMS_VDM_VIEW_MDCR_PRD",  
+      "table_name": "V2_PRVDR_ENMRT_TXNMY_MTRLZD_CRNT",  
+      "table_type": "VIEW",  
+      "columns": [  
+        {  
+          "column_name": "PRVDR_NPI_NUM",  
+          "data_type": "TEXT",  
+          "ordinal_position": 1,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": null,  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "PRVDR_PRMRY_TXNMY_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 2,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": null,  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "PRVDR_TXNMY_1_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 3,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": null,  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "PRVDR_TXNMY_2_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 4,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": null,  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "PRVDR_TXNMY_3_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 5,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": null,  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "PRVDR_TXNMY_4_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 6,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": null,  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "PRVDR_TXNMY_5_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 7,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": null,  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "PRVDR_TXNMY_6_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 8,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": null,  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "PRVDR_TXNMY_7_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 9,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": null,  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "PRVDR_TXNMY_8_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 10,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": null,  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "PRVDR_TXNMY_9_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 11,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": null,  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "PRVDR_TXNMY_10_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 12,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": null,  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "PRVDR_TXNMY_11_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 13,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": null,  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "PRVDR_TXNMY_12_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 14,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": null,  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "PRVDR_TXNMY_13_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 15,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": null,  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "PRVDR_TXNMY_14_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 16,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": null,  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "PRVDR_TXNMY_15_CD",  
+          "data_type": "TEXT",  
+          "ordinal_position": 17,  
+          "is_nullable": "YES",  
+          "column_default": null,  
+          "comment": null,  
+          "character_maximum_length": 10,  
+          "type_description": "TEXT(10)"  
+        },  
+        {  
+          "column_name": "META_SRC_SK",  
+          "data_type": "NUMBER",  
+          "ordinal_position": 18,  
+          "is_nullable": "NO",  
+          "column_default": null,  
+          "comment": null,  
+          "numeric_precision": 38,  
+          "type_description": "NUMBER(38)"  
+        }  
+      ]  
+    }  
+  ]  
+}  

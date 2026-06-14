@@ -1,0 +1,143 @@
+Starting file version analysis...
+Scanning Python directory: ../idr/
+Exporting PECOS recent practice address data...
+do_idr_output: Starting process for pecos_recent_practice_address (version v01)
+Starting export for pecos_recent_practice_address to @~/pecos_recent_practice_address.v01.2025_10_23_0208.csv
+IDROutputter._execute_export Error: Failed to export pecos_recent_practice_address
+Error details: 'NoneType' object has no attribute 'sql'
+This could be due to invalid SQL syntax, connection issues, or permission problems
+IDROutputter.do_idr_output Error: Failed to complete output for pecos_recent_practice_address
+Error details: 'NoneType' object has no attribute 'sql'
+Check your getSelectQuery() implementation, file_name_stub property, and Snowflake connection
+ERROR loading module pecos_recent_practice_address_new.py: 'NoneType' object has no attribute 'sql'
+ERROR loading module pecos_recent_practice_address.py: 'NoneType' object has no attribute 'sql'
+ERROR loading module nppes_other_name_export.py: 'NoneType' object has no attribute 'sql'
+ERROR loading module example_medicaid_credentials_refactor.py: IDROutputter.do_idr_output() got an unexpected keyword argument 'file_name_stub'
+PECOS Provider Type Export is not yet implemented - see TODO in original file
+Found IDROutputter class: PecosProviderTypeExporter -> pecos_provider_type_with_history.v01
+ERROR loading module nppes_enumeration_main_export.py: name 'pepper' is not defined
+do_idr_output: Starting process for nppes_old_addresses (version v01)
+Starting export for nppes_old_addresses to @~/nppes_old_addresses.v01.2025_10_23_0208.csv
+IDROutputter._execute_export Error: Failed to export nppes_old_addresses
+Error details: 'NoneType' object has no attribute 'sql'
+This could be due to invalid SQL syntax, connection issues, or permission problems
+IDROutputter.do_idr_output Error: Failed to complete output for nppes_old_addresses
+Error details: 'NoneType' object has no attribute 'sql'
+Check your getSelectQuery() implementation, file_name_stub property, and Snowflake connection
+ERROR loading module nppes_enumeration_old_addresses_new.py: 'NoneType' object has no attribute 'sql'
+Creating temporary NPI-address table...
+Creating temporary NPI-address table...
+ERROR loading module medicaid_service_address_new.py: 'NoneType' object has no attribute 'sql'
+do_idr_output: Starting process for pecos_dba_history (version v01)
+Starting export for pecos_dba_history to @~/pecos_dba_history.v01.2025_10_23_0208.csv
+IDROutputter._execute_export Error: Failed to export pecos_dba_history
+Error details: 'NoneType' object has no attribute 'sql'
+This could be due to invalid SQL syntax, connection issues, or permission problems
+IDROutputter.do_idr_output Error: Failed to complete output for pecos_dba_history
+Error details: 'NoneType' object has no attribute 'sql'
+Check your getSelectQuery() implementation, file_name_stub property, and Snowflake connection
+ERROR loading module pecos_dba_export_new.py: 'NoneType' object has no attribute 'sql'
+Found IDROutputter class: NPPESMainExporter -> nppes_main_idr_export.v01
+Found IDROutputter class: PecosUnexpiredStateLicenseExporter -> pecos_unexpired_license.v01
+do_idr_output: Starting process for pecos_organization_export (version v01)
+Starting export for pecos_organization_export to @~/pecos_organization_export.v01.2025_10_23_0208.csv
+IDROutputter._execute_export Error: Failed to export pecos_organization_export
+Error details: 'NoneType' object has no attribute 'sql'
+This could be due to invalid SQL syntax, connection issues, or permission problems
+IDROutputter.do_idr_output Error: Failed to complete output for pecos_organization_export
+Error details: 'NoneType' object has no attribute 'sql'
+Check your getSelectQuery() implementation, file_name_stub property, and Snowflake connection
+ERROR loading module pecos_organization_export_new.py: 'NoneType' object has no attribute 'sql'
+ERROR loading module nppes_enumeration_old_addresses.py: 'NoneType' object has no attribute 'sql'
+ERROR loading module pecos_individual_export.py: 'NoneType' object has no attribute 'sql'
+Starting Medicaid Service Location Analysis...
+Executing service location analysis query...
+ERROR loading module medicaid_service_address_analysis.py: 'NoneType' object has no attribute 'sql'
+do_idr_output: Starting process for pecos_individual_export (version v01)
+Starting export for pecos_individual_export to @~/pecos_individual_export.v01.2025_10_23_0208.csv
+IDROutputter._execute_export Error: Failed to export pecos_individual_export
+Error details: 'NoneType' object has no attribute 'sql'
+This could be due to invalid SQL syntax, connection issues, or permission problems
+IDROutputter.do_idr_output Error: Failed to complete output for pecos_individual_export
+Error details: 'NoneType' object has no attribute 'sql'
+Check your getSelectQuery() implementation, file_name_stub property, and Snowflake connection
+ERROR loading module pecos_individual_export_new.py: 'NoneType' object has no attribute 'sql'
+Found IDROutputter class: MedicaidProviderCredentialsExporter -> medicaid_provider_credentials.v01
+Creating temporary NPI-address table...
+ERROR loading module medicaid_service_address.py: 'NoneType' object has no attribute 'sql'
+ERROR loading module pecos_unexpired_state_license.py: 'NoneType' object has no attribute 'sql'
+Starting Medicaid Service Location Analysis...
+do_idr_output: Starting process for medicaid_service_location_analysis (version v01)
+Starting export for medicaid_service_location_analysis to @~/medicaid_service_location_analysis.v01.2025_10_23_0208.csv
+IDROutputter._execute_export Error: Failed to export medicaid_service_location_analysis
+Error details: 'NoneType' object has no attribute 'sql'
+This could be due to invalid SQL syntax, connection issues, or permission problems
+IDROutputter.do_idr_output Error: Failed to complete output for medicaid_service_location_analysis
+Error details: 'NoneType' object has no attribute 'sql'
+Check your getSelectQuery() implementation, file_name_stub property, and Snowflake connection
+ERROR loading module medicaid_service_address_analysis_new.py: 'NoneType' object has no attribute 'sql'
+ERROR loading module pecos_dba_export.py: 'NoneType' object has no attribute 'sql'
+ERROR loading module pecos_provider_type.py: 'NoneType' object has no attribute 'sql'
+do_idr_output: Starting process for nppes_othername_with_history (version v01)
+Starting export for nppes_othername_with_history to @~/nppes_othername_with_history.v01.2025_10_23_0208.csv
+IDROutputter._execute_export Error: Failed to export nppes_othername_with_history
+Error details: 'NoneType' object has no attribute 'sql'
+This could be due to invalid SQL syntax, connection issues, or permission problems
+IDROutputter.do_idr_output Error: Failed to complete output for nppes_othername_with_history
+Error details: 'NoneType' object has no attribute 'sql'
+Check your getSelectQuery() implementation, file_name_stub property, and Snowflake connection
+ERROR loading module nppes_other_name_export_new.py: 'NoneType' object has no attribute 'sql'
+ERROR loading module medicaid_provider_credentials.py: 'NoneType' object has no attribute 'sql'
+ERROR loading module pecos_organization_export.py: 'NoneType' object has no attribute 'sql'
+do_idr_output: Starting process for nppes_contact_email_domainname (version v01)
+Starting export for nppes_contact_email_domainname to @~/nppes_contact_email_domainname.v01.2025_10_23_0208.csv
+IDROutputter._execute_export Error: Failed to export nppes_contact_email_domainname
+Error details: 'NoneType' object has no attribute 'sql'
+This could be due to invalid SQL syntax, connection issues, or permission problems
+IDROutputter.do_idr_output Error: Failed to complete output for nppes_contact_email_domainname
+Error details: 'NoneType' object has no attribute 'sql'
+Check your getSelectQuery() implementation, file_name_stub property, and Snowflake connection
+ERROR loading module nppes_other_name_domain_name_export_new.py: 'NoneType' object has no attribute 'sql'
+ERROR loading module nppes_other_name_domain_name_export.py: 'NoneType' object has no attribute 'sql'
+Scanning CSV directory: /Users/tgda/cms_data_downloads_possible_pii/idr_data/
+Found CSV: medicaid_provider_credentials.v01.2025_10_23_0159.csv -> m.v01 (1588481 lines)
+
+================================================================================
+FILE VERSION TESTER REPORT
+================================================================================
+
+Class: [1mPecosProviderTypeExporter[0m
+File Name Stub: pecos_provider_type_with_history
+Version: v01
+Expected Columns: 1
+Status: [93mno matching CSV file[0m
+
+Class: [1mNPPESMainExporter[0m
+File Name Stub: nppes_main_idr_export
+Version: v01
+Expected Columns: 46
+Status: [93mno matching CSV file[0m
+
+Class: [1mPecosUnexpiredStateLicenseExporter[0m
+File Name Stub: pecos_unexpired_license
+Version: v01
+Expected Columns: 6
+Status: [93mno matching CSV file[0m
+
+Class: [1mMedicaidProviderCredentialsExporter[0m
+File Name Stub: medicaid_provider_credentials
+Version: v01
+Expected Columns: 6
+Status: [93mno matching CSV file[0m
+
+[1mCSV FILES WITHOUT MATCHING CLASSES:[0m
+  [93mmedicaid_provider_credentials.v01.2025_10_23_0159.csv[0m - no matching IDROutputter class
+
+[1mSUMMARY:[0m
+Total IDROutputter classes found: 4
+Total CSV files found: 1
+CSV files without matching classes: 1
+Classes with [92mcurrent[0m status: 0
+Classes with [93mwarning[0m status: 4
+
+Analysis complete!

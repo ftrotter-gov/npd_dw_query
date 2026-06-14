@@ -1,0 +1,105 @@
+{
+  "metadata": {
+    "generated_timestamp": "2024-11-03T17:45:00",
+    "search_pattern": "%PROVIDER%",
+    "total_tables_found": 3
+  },
+  "tables": [
+    {
+      "database": "IDRC_PRD",
+      "schema": "CMS_VDM_VIEW_MDCR_PRD",
+      "table_name": "V2_PROVIDER_DEMOGRAPHICS",
+      "table_type": "VIEW",
+      "columns": [
+        {
+          "column_name": "PRVDR_NPI_NUM",
+          "data_type": "VARCHAR",
+          "ordinal_position": 1,
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "PRVDR_ENT_TYPE_CD",
+          "data_type": "VARCHAR",
+          "ordinal_position": 2,
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "PRVDR_CRTFCTN_DT",
+          "data_type": "DATE",
+          "ordinal_position": 3,
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "PRVDR_1ST_NAME",
+          "data_type": "VARCHAR",
+          "ordinal_position": 4,
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "PRVDR_LAST_NAME",
+          "data_type": "VARCHAR",
+          "ordinal_position": 5,
+          "is_nullable": "YES"
+        }
+      ]
+    },
+    {
+      "database": "IDRC_PRD",
+      "schema": "CMS_VDM_VIEW_MDCR_PRD",
+      "table_name": "V2_PROVIDER_LICENSES",
+      "table_type": "VIEW",
+      "columns": [
+        {
+          "column_name": "PRVDR_NPI_NUM",
+          "data_type": "VARCHAR",
+          "ordinal_position": 1,
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "LICENSE_STATE",
+          "data_type": "VARCHAR",
+          "ordinal_position": 2,
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "LICENSE_NUMBER",
+          "data_type": "VARCHAR",
+          "ordinal_position": 3,
+          "is_nullable": "YES"
+        }
+      ]
+    },
+    {
+      "database": "IDRC_PRD",
+      "schema": "CMS_VDM_VIEW_MDCR_PRD",
+      "table_name": "PROVIDER_ENROLLMENT_HISTORY",
+      "table_type": "TABLE",
+      "columns": [
+        {
+          "column_name": "ENROLLMENT_ID",
+          "data_type": "NUMBER",
+          "ordinal_position": 1,
+          "is_nullable": "NO"
+        },
+        {
+          "column_name": "PRVDR_NPI_NUM",
+          "data_type": "VARCHAR",
+          "ordinal_position": 2,
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "ENROLLMENT_DATE",
+          "data_type": "DATE",
+          "ordinal_position": 3,
+          "is_nullable": "YES"
+        },
+        {
+          "column_name": "STATUS",
+          "data_type": "VARCHAR",
+          "ordinal_position": 4,
+          "is_nullable": "YES"
+        }
+      ]
+    }
+  ]
+}

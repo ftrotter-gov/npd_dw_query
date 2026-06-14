@@ -1,0 +1,49 @@
+{
+  "metadata": {
+    "generated_timestamp": "2024-11-04T00:28:00",
+    "search_pattern": "%TEST%",
+    "total_tables_found": 1
+  },
+  "tables": [
+    {
+      "database": "TEST_DB",
+      "schema": "TEST_SCHEMA",
+      "table_name": "TEST_TABLE_ENHANCED",
+      "table_type": "TABLE",
+      "columns": [
+        {
+          "column_name": "ID",
+          "data_type": "NUMBER",
+          "ordinal_position": 1,
+          "is_nullable": "NO",
+          "column_default": null,
+          "comment": "Primary key identifier",
+          "numeric_precision": 10,
+          "numeric_scale": 0,
+          "type_description": "NUMBER(10)"
+        },
+        {
+          "column_name": "NAME",
+          "data_type": "VARCHAR",
+          "ordinal_position": 2,
+          "is_nullable": "YES",
+          "column_default": null,
+          "comment": "Provider name field",
+          "character_maximum_length": 255,
+          "type_description": "VARCHAR(255)"
+        },
+        {
+          "column_name": "BALANCE",
+          "data_type": "DECIMAL",
+          "ordinal_position": 3,
+          "is_nullable": "YES",
+          "column_default": "0.00",
+          "comment": "Account balance in USD",
+          "numeric_precision": 15,
+          "numeric_scale": 2,
+          "type_description": "DECIMAL(15,2)"
+        }
+      ]
+    }
+  ]
+}

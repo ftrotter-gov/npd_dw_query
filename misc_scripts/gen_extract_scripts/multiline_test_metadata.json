@@ -1,0 +1,36 @@
+{
+  "metadata": {
+    "generated_timestamp": "2024-11-04T01:13:00",
+    "search_pattern": "%MULTILINE%",
+    "total_tables_found": 1
+  },
+  "tables": [
+    {
+      "database": "TEST_DB",
+      "schema": "TEST_SCHEMA",
+      "table_name": "MULTILINE_COMMENT_TABLE",
+      "table_type": "TABLE",
+      "columns": [
+        {
+          "column_name": "FIELD_WITH_MULTILINE_COMMENT",
+          "data_type": "VARCHAR",
+          "ordinal_position": 1,
+          "is_nullable": "YES",
+          "column_default": null,
+          "comment": "This is a comment that spans\nmultiple lines with various\nformatting issues    and extra spaces",
+          "character_maximum_length": 100,
+          "type_description": "VARCHAR(100)"
+        },
+        {
+          "column_name": "NORMAL_FIELD",
+          "data_type": "NUMBER",
+          "ordinal_position": 2,
+          "is_nullable": "NO",
+          "column_default": null,
+          "comment": "Single line comment works fine",
+          "type_description": "NUMBER"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,47 @@
+{
+  "metadata": {
+    "generated_timestamp": "2024-11-04T00:42:00",
+    "search_pattern": "%ENHANCED%",
+    "total_tables_found": 1
+  },
+  "tables": [
+    {
+      "database": "IDRC_PRD",
+      "schema": "CMS_VDM_VIEW_MDCR_PRD",
+      "table_name": "ENHANCED_PROVIDER_TABLE",
+      "table_type": "TABLE",
+      "columns": [
+        {
+          "column_name": "PRVDR_NPI_NUM",
+          "data_type": "VARCHAR",
+          "ordinal_position": 1,
+          "is_nullable": "NO",
+          "column_default": null,
+          "comment": "National Provider Identifier",
+          "character_maximum_length": 10,
+          "type_description": "VARCHAR(10)"
+        },
+        {
+          "column_name": "PRVDR_BALANCE",
+          "data_type": "DECIMAL",
+          "ordinal_position": 2,
+          "is_nullable": "YES",
+          "column_default": "0.00",
+          "comment": "Provider account balance in USD",
+          "numeric_precision": 15,
+          "numeric_scale": 2,
+          "type_description": "DECIMAL(15,2)"
+        },
+        {
+          "column_name": "PRVDR_ACTIVE_IND",
+          "data_type": "BOOLEAN",
+          "ordinal_position": 3,
+          "is_nullable": "YES",
+          "column_default": "FALSE",
+          "comment": "Whether provider is currently active",
+          "type_description": "BOOLEAN"
+        }
+      ]
+    }
+  ]
+}
