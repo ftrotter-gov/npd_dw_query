@@ -104,46 +104,73 @@ def table_to_stub(full_table_name):
 # S3 LISTING
 # ============================================================================
 
-def list_s3_files(s3_bucket):
+def list_s3_files(s3_bucket, verbose=False):
     """
-    Run `aws s3 ls {s3_bucket}/` and return a list of
+    Run `aws s3 ls {s3_bucket}/ --no-paginate` and return a list of
         (last_modified: datetime, size: int, filename: str)
     tuples for every .csv file found.
+
+    Uses --no-paginate so all files are returned even if there are
+    more than the default page size.
 
     aws s3 ls output format:
         2026-06-14 05:14:23      1234567 some_file.csv
     """
-    print(f"Listing S3 files in {s3_bucket}/ ...")
+    url = s3_bucket + '/'
+    print(f"Listing S3 files in {url} ...")
     result = subprocess.run(
-        ['aws', 's3', 'ls', s3_bucket + '/'],
+        ['aws', 's3', 'ls', url, '--no-paginate'],
         capture_output=True, text=True
     )
     if result.returncode != 0:
         print(f"ERROR: aws s3 ls failed:\n{result.stderr[:500]}")
         sys.exit(1)
 
+    if verbose:
+        print("  Raw aws s3 ls output:")
+        for line in result.stdout.splitlines():
+            print(f"    {line}")
+        print()
+
     files = []
+    skipped = []
     for line in result.stdout.splitlines():
-        parts = line.split()
-        if len(parts) < 4:
+        line = line.rstrip()
+        if not line:
             continue
-        date_str, time_str, size_str, filename = parts[0], parts[1], parts[2], parts[3]
+
+        # aws s3 ls format: "YYYY-MM-DD HH:MM:SS  <size>  <key>"
+        # Split into at most 4 parts; key may contain spaces (join the rest)
+        parts = line.split(None, 3)  # maxsplit=3 → parts[3] = entire filename
+        if len(parts) < 4:
+            # Might be a "PRE prefix/" directory indicator — skip
+            skipped.append(line)
+            continue
+
+        date_str, time_str, size_str, filename = parts
+        filename = filename.strip()
+
         if not filename.endswith('.csv'):
             continue
+
         try:
             last_modified = datetime.strptime(
                 f"{date_str} {time_str}", '%Y-%m-%d %H:%M:%S'
             ).replace(tzinfo=timezone.utc)
             size = int(size_str)
             files.append((last_modified, size, filename))
-        except (ValueError, IndexError):
+        except (ValueError, IndexError) as e:
+            print(f"  ⚠ Could not parse line: {line!r}  ({e})")
             continue
+
+    if skipped and verbose:
+        print(f"  Skipped {len(skipped)} non-file line(s)")
 
     print(f"  Found {len(files)} CSV file(s) in S3")
     return files
 
 
-def build_s3_index(s3_files):
+def build_s3_index(s3_files, verbose=False):
     """
     Build a lookup dict: stub_prefix → list of (last_modified, size, filename)
 
@@ -153,15 +180,16 @@ def build_s3_index(s3_files):
     """
     index = {}
     for last_modified, size, filename in s3_files:
-        # Strip extension, split on '.v0' to get the stub
         # filename: stub.v01.YYYY_MM_DD_HHMM.csv
         dot_v_idx = filename.find('.v0')
         if dot_v_idx != -1:
             stub = filename[:dot_v_idx]
         else:
-            # Fallback: treat everything before the first dot as the stub
+            # Fallback: everything before the first dot
             stub = filename.split('.')[0]
         index.setdefault(stub, []).append((last_modified, size, filename))
+        if verbose:
+            print(f"    S3 stub: {stub}  ← {filename}")
     return index
 
 
@@ -252,11 +280,12 @@ def print_report(results, threshold_days):
             age_str = "not in S3"
         print(f"  {icon} {label}  {table:<55}  {age_str}")
 
+    total       = len(results)
+    out_of_date = len(stale) + len(missing)
+
     print()
-    print(f"  ✓ Fresh   : {len(fresh)}")
-    print(f"  ⚠ Stale   : {len(stale)}")
-    print(f"  ✗ Missing : {len(missing)}")
-    print(f"  Total     : {len(results)}")
+    print(f"  ✓ Fresh      : {len(fresh)}/{total}")
+    print(f"  ✗ Out of date: {out_of_date}/{total}  [{len(stale)} stale + {len(missing)} missing]")
     print("=" * 70)
 
 
@@ -329,11 +358,24 @@ def main():
     print(f"Tables in all_available_tables.csv: {len(all_tables)}")
 
     # ── 2. List S3 files ─────────────────────────────────────────────────────
-    s3_files = list_s3_files(s3_bucket)
-    s3_index = build_s3_index(s3_files)
+    verbose = '--verbose' in sys.argv or '-v' in sys.argv
+    s3_files = list_s3_files(s3_bucket, verbose=verbose)
+    s3_index = build_s3_index(s3_files, verbose=verbose)
+
+    if verbose:
+        print(f"\n  S3 stubs found ({len(s3_index)}):")
+        for stub in sorted(s3_index):
+            print(f"    {stub}")
+        print()
 
     # ── 3. Check each table ──────────────────────────────────────────────────
     results, to_refresh = check_tables(all_tables, s3_index, threshold_days)
+    
+    if verbose:
+        print("\n  Table → stub mapping:")
+        for r in results:
+            print(f"    {r['table'].split('.')[-1]:<55}  →  {r['stub']}")
+        print()
 
     # ── 4. Print report ──────────────────────────────────────────────────────
     print_report(results, threshold_days)

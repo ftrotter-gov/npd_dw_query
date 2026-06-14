@@ -14,7 +14,7 @@ from datetime import datetime
 # ============================================================================
 
 METADATA_JSON = {
-    "generated": "2026-06-14T16:46:01.750048",
+    "generated": "2026-06-14T16:53:32.518875",
     "source": "Generated from list_of_tables_to_download.csv and cached metadata",
     "tables": [
         {
