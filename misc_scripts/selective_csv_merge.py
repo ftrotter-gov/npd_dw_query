@@ -16,6 +16,7 @@ This tool:
 import os
 import glob
 import re
+import argparse
 import pandas as pd
 import sys
 from collections import defaultdict
@@ -259,12 +260,39 @@ class SelectiveMergeProcessor:
 
 def main():
     """Main entry point for selective CSV merge tool"""
-    
-    # Define directory paths (matching existing bash script structure)
-    base_dir = os.path.expanduser("~/cms_data_downloads_possible_pii/idr_data")
-    unmerged_dir = os.path.join(base_dir, "unmerged_csv_files")
-    output_dir = base_dir
-    
+
+    parser = argparse.ArgumentParser(
+        description="Selectively merge CSV part files downloaded from a Snowflake stage.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python3 selective_csv_merge.py /path/to/unmerged_csv_files /path/to/output
+  python3 selective_csv_merge.py ~/idr_data/unmerged ~/idr_data/merged
+        """,
+    )
+    parser.add_argument(
+        "unmerged_dir",
+        help="Directory containing CSV part files to merge (e.g. unmerged_csv_files/)",
+    )
+    parser.add_argument(
+        "output_dir",
+        help="Directory where merged CSV files will be written",
+    )
+    args = parser.parse_args()
+
+    unmerged_dir = os.path.expanduser(args.unmerged_dir)
+    output_dir = os.path.expanduser(args.output_dir)
+
+    # Validate output directory - create it if it doesn't exist
+    if not os.path.isdir(output_dir):
+        try:
+            os.makedirs(output_dir, exist_ok=True)
+            print(f" Created output directory: {output_dir}")
+        except OSError as e:
+            print(f" ERROR: Cannot create output directory: {output_dir}")
+            print(f"        {e}")
+            return 1
+
     print("Selective CSV Merge Tool")
     print("=" * 50)
     print(f"Scanning: {unmerged_dir}")

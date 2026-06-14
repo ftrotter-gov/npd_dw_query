@@ -85,38 +85,41 @@ fi
 
 log "snowsql found at: $SNOWSQL_PATH"
 
-# Function to list files in Snowflake stage
+# Function to list files in Snowflake stage (single snowsql auth)
 list_stage_files() {
     "$SNOWSQL_PATH" -c "$SNOWFLAKE_CONFIG" -q "LIST @~/ PATTERN='.*\.csv';" 2>/dev/null | grep -E "\.csv" | awk '{print $1}' || echo ""
 }
 
-# Function to download a file from Snowflake
-download_file() {
-    local file="$1"
-    local filename=$(basename "$file")
-    
-    log "Downloading: $filename"
+# Function to download ALL csv files at once (single snowsql auth, like original script)
+download_all_files() {
+    log "Downloading all CSV files from stage..."
     
     pushd "$DOWNLOAD_DIR" > /dev/null
     
-    if "$SNOWSQL_PATH" -c "$SNOWFLAKE_CONFIG" -q "GET @~/$filename file://. PATTERN='$filename';" > /dev/null 2>&1; then
-        log "✓ Downloaded: $filename"
-        
-        # Delete from Snowflake after successful download
-        if "$SNOWSQL_PATH" -c "$SNOWFLAKE_CONFIG" -q "REMOVE @~/$filename;" > /dev/null 2>&1; then
-            log "✓ Deleted from stage: $filename"
-            LAST_ACTIVITY_TIME=$(date +%s)
-            return 0
-        else
-            log "✗ Failed to delete from stage: $filename"
-            return 1
-        fi
+    if "$SNOWSQL_PATH" -c "$SNOWFLAKE_CONFIG" -q "GET @~/ file://. PATTERN='.*.csv';" > /dev/null 2>&1; then
+        local downloaded=$(find "$DOWNLOAD_DIR" -maxdepth 1 -name "*.csv" -newer "$LOG_FILE" -type f 2>/dev/null | wc -l)
+        log "✓ Download complete"
+        popd > /dev/null
+        return 0
     else
-        log "✗ Failed to download: $filename"
+        log "✗ Failed to download files from stage"
+        popd > /dev/null
         return 1
     fi
+}
+
+# Function to remove ALL csv files from stage at once (single snowsql auth)
+remove_all_stage_files() {
+    log "Removing downloaded files from stage..."
     
-    popd > /dev/null
+    if "$SNOWSQL_PATH" -c "$SNOWFLAKE_CONFIG" -q "REMOVE @~/ PATTERN='.*.csv';" > /dev/null 2>&1; then
+        log "✓ Stage cleared"
+        LAST_ACTIVITY_TIME=$(date +%s)
+        return 0
+    else
+        log "✗ Failed to clear stage"
+        return 1
+    fi
 }
 
 # Main polling loop
@@ -148,22 +151,20 @@ while true; do
     STAGE_FILES=$(list_stage_files)
     
     if [ -n "$STAGE_FILES" ]; then
-        FILE_COUNT=$(echo "$STAGE_FILES" | wc -l)
+        FILE_COUNT=$(echo "$STAGE_FILES" | grep -c "." || echo "0")
         log "Found $FILE_COUNT file(s) in stage"
         
-        # Download each file
-        while IFS= read -r file; do
-            if [ -n "$file" ]; then
-                download_file "$file"
-            fi
-        done <<< "$STAGE_FILES"
-        
-        LAST_ACTIVITY_TIME=$(date +%s)
+        # Download ALL files in one snowsql call, then remove all in one snowsql call
+        # This avoids re-authenticating per file (like original download_and_merge_all_snowflake_csv.sh)
+        if download_all_files; then
+            remove_all_stage_files
+            LAST_ACTIVITY_TIME=$(date +%s)
+        fi
         
         # Mark time of first file
         if [ -z "$FIRST_FILE_TIME" ]; then
             FIRST_FILE_TIME=$(date '+%Y-%m-%d %H:%M:%S')
-            log "First file downloaded at: $FIRST_FILE_TIME"
+            log "First file batch downloaded at: $FIRST_FILE_TIME"
         fi
     else
         log "No new files found in stage"
