@@ -141,15 +141,17 @@ class MetadataGenerator:
     def find_table_in_cached_metadata(self, database, schema, table):
         """
         Find a table in the cached JSON metadata files.
+        Uses flexible matching - looks for the table name regardless of schema/database.
         
         Args:
-            database: Database name
-            schema: Schema name
-            table: Table name
+            database: Database name (IDRC_PRD)
+            schema: Schema name (may vary in cache)
+            table: Table name (the key identifier)
         
         Returns:
             dict: Table info from cached metadata, or None if not found
         """
+        # First try exact match
         for cache_name, cache_data in self.cached_metadata.items():
             if 'tables' not in cache_data:
                 continue
@@ -158,6 +160,19 @@ class MetadataGenerator:
                 if (table_info.get('database') == database and
                     table_info.get('schema') == schema and
                     table_info.get('table_name') == table):
+                    return table_info
+        
+        # If no exact match, try matching just on table name (more flexible)
+        # This handles cases where the schema might be different in the cache
+        table_upper = table.upper()
+        for cache_name, cache_data in self.cached_metadata.items():
+            if 'tables' not in cache_data:
+                continue
+            
+            for table_info in cache_data['tables']:
+                if table_info.get('table_name', '').upper() == table_upper:
+                    # Found a match on table name - use this
+                    print(f"    Found table {table} in cache: {table_info.get('database')}.{table_info.get('schema')}.{table_info.get('table_name')}")
                     return table_info
         
         return None
