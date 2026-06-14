@@ -1,226 +1,164 @@
-g# IDR2: Parallel Snowflake Export & Download System
+# IDR2: Parallel Snowflake Export & Download System
 
-This system automates the export of multiple Snowflake tables and downloads them to your local machine without requiring manual intervention. It uses file presence/absence as a synchronization mechanism between the Snowflake exporter and the downloader.
+This system exports multiple Snowflake tables to your local machine and to S3,
+coordinating between a Snowflake notebook and a local downloader that run in parallel.
 
-## Architecture
+## Directory Layout
 
-The system consists of two main components running in parallel:
+```
+idr2/
+  step1_tables_to_export.csv        ← EDIT THIS: list the tables you want
+  all_available_tables.csv          ← reference: all tables available to download
 
-### 1. **Snowflake Side** (Notebook)
-- Reads metadata about all tables to export
-- Exports one CSV file at a time using COPY INTO
-- Waits for each file to be downloaded (detected by its absence from the stage)
-- Moves to the next file after confirmation
-- Automatically stops after 2 hours of inactivity
+  example.env                       ← copy to .env and fill in your settings
+  .env                              ← your local config (not in git)
 
-### 2. **Downloader Side** (Your Machine)
-- Continuously polls Snowflake stage for new CSV files
-- Downloads new files to local directory
-- Deletes downloaded files from Snowflake stage
-- Merges all CSVs into consolidated output
-- Automatically stops after 2 hours of inactivity
+  local_laptop/                     ← scripts that run on YOUR machine
+    step2_generate_metadata.py      ← generates metadata from the table list
+    step3_generate_snowflake_cell2.py ← generates the Snowflake Cell 2 script
+    step4_download_merge_upload.py  ← polls Snowflake, downloads, merges, uploads to S3
 
-## Setup Instructions
+  snowflake/                        ← scripts that run INSIDE Snowflake
+    cell1_snowflake_export_classes.py ← paste into Cell 1 of your Snowflake notebook
+    cell2_snowflake_export_notebook.py ← paste into Cell 2 (re-generate with step3)
+```
 
-### Prerequisites
+---
 
-- Python 3.8+
-- Snowflake configured with snowsql (`/Applications/SnowSQL.app/Contents/MacOS/snowsql`)
-- Directory created: `~/cms_data_downloads_possible_pii/idr_data/unmerged_csv_files/`
+## How It Works
 
-### Step 1: Configure Environment
+The system uses file presence/absence as a synchronization signal:
+
+1. **Snowflake** exports one table at a time to `@~/` (the Snowflake user stage)
+2. **Your laptop** detects the new file, downloads it, merges part files, uploads to S3, then removes it from the stage
+3. **Snowflake** sees the file is gone → exports the next table
+
+Steps 4 and 5 below run **simultaneously in two separate terminals/windows**.
+
+---
+
+## Setup (one time)
+
+### Step 0: Configure
 
 ```bash
 cd idr2/
-
-# Copy example configuration
 cp example.env .env
-
-# Edit .env with your settings
 nano .env
 ```
 
-**Configuration Options (.env):**
-```
+Key settings in `.env`:
+
+```ini
 DOWNLOAD_DIRECTORY=~/cms_data_downloads_possible_pii/idr_data/unmerged_csv_files
-POLLING_INTERVAL_MINUTES=5          # Check every 5 minutes (configurable)
-QUIT_AFTER_HOURS=2                  # Stop after 2 hours with no activity
-SNOWFLAKE_CONFIG=cms_idr            # From ~/.snowsql/config
+SNOWFLAKE_CONFIG=cms_idr
 SNOWSQL_PATH=/Applications/SnowSQL.app/Contents/MacOS/snowsql
+S3_BUCKET=s3://your-bucket-name/idr_exports/
+POLLING_INTERVAL_MINUTES=5
+QUIT_AFTER_HOURS=2
 ```
 
-### Step 2: Create List of Tables to Download
+---
 
-Edit `list_of_tables_to_download.csv` with the tables you want to export:
+## Running an Export (every time)
+
+### Step 1: Choose tables
+
+Edit `step1_tables_to_export.csv`:
 
 ```csv
 table_to_download
 IDRC_PRD.CMS_VDM_VIEW_MDCR_PRD.V2_MDCR_PRVDR
 IDRC_PRD.CMS_VDM_VIEW_MDCR_PRD.V2_MDCR_PRVDR_HCIDEA
-IDRC_PRD.CMS_VDM_VIEW_PRVDR_ENRLMT.V2_PRVDR_ENRLMT_HSTRY
 ```
 
-Format: `database.schema.table` (one per line)
+Format: `database.schema.table` — one per line. See `all_available_tables.csv` for the full list.
 
-### Step 3: Generate Metadata
+### Step 2: Generate metadata
 
 ```bash
-python3 metadata_generator.py
+python3 idr2/local_laptop/step2_generate_metadata.py
 ```
 
-This reads `list_of_tables_to_download.csv` and generates `export_metadata.json` with all table information including:
-- Explicit SELECT statements with all columns named (not SELECT *)
-- Proper file naming stubs
-- Version information
+Reads `step1_tables_to_export.csv` and produces `export_metadata.json` with SELECT statements for every column.
 
-The metadata is now ready to use in the Snowflake notebook.
-
-### Step 4: Start Downloader (Terminal 1)
+### Step 3: Generate the Snowflake Cell 2 script
 
 ```bash
-cd misc_scripts/
-./download_and_merge_with_polling.sh
+python3 idr2/local_laptop/step3_generate_snowflake_cell2.py
 ```
 
-The downloader will:
-- Load configuration from `idr2/.env`
-- Start polling for files every 5 minutes
-- Download any new CSV files
-- Delete them from Snowflake after successful download
-- Continue until all files are downloaded or 2 hours elapse
+Reads the metadata and writes `idr2/snowflake/cell2_snowflake_export_notebook.py` with all table metadata embedded directly (no external files needed inside Snowflake).
 
-### Step 5: Start Snowflake Exporter (Terminal 2)
+---
 
-In your Snowflake notebook:
+## ▶ Start BOTH of these in parallel
 
-1. Copy the entire contents of `snowflake_export_loop.py`
-2. Paste into a Python cell
-3. Update the `METADATA_JSON` with your table configuration (or load from the generated metadata)
-4. Run the cell with: `main()`
+### Step 4 — Terminal 1 (your laptop)
 
-The exporter will:
-- Load metadata
-- Export tables one at a time to `@~/` (Snowflake user stage)
-- Wait 5 minutes between checks for download confirmation
-- Move to next table once current file is deleted
-- Stop after 2 hours with no activity
-
-## File Naming Convention
-
-Exported files follow this pattern:
-```
-{table_name_stub}.{version_number}.{timestamp}.csv
-```
-
-Example: `v2_mdcr_prvdr_idr_export.v01.2024_06_14_0130.csv`
-
-Components:
-- `table_name_stub`: Lowercase table name with "_idr_export" suffix
-- `version_number`: Defaults to "v01"
-- `timestamp`: Year_Month_Day_Hour+Minute (UTC)
-
-## Monitoring Progress
-
-### Snowflake Notebook Output
-You'll see:
-- Export start/finish messages
-- File names being exported
-- Polling messages while waiting
-- Summary at end with success/failure counts
-
-### Downloader Output
-The downloader logs to:
-- `download_progress.log` - Progress and activity
-- Terminal - Real-time status messages
-
-## Handling Issues
-
-### Downloader Timeout
-If downloader exits due to timeout (2 hours with no new files):
-- Check Snowflake notebook for export errors
-- Verify network connectivity
-- Check `DOWNLOAD_DIRECTORY` permissions
-- Increase `QUIT_AFTER_HOURS` in .env if needed
-
-### Exporter Timeout
-If exporter stops waiting for download:
-- Check that downloader is still running
-- Verify `DOWNLOAD_DIRECTORY` exists and is accessible
-- Check Snowflake connection is still active
-- Ensure `.env` file has correct paths
-
-### Stuck Files in Snowflake Stage
-If files remain in `@~/` after process completes:
 ```bash
-# List files in stage
-snowsql -c cms_idr -q "LIST @~/ PATTERN='*.csv';"
-
-# Remove stuck files manually
-snowsql -c cms_idr -q "REMOVE @~/ PATTERN='v2_mdcr_prvdr*.csv';"
+python3 idr2/local_laptop/step4_download_merge_upload.py
 ```
 
-## File Organization
+This will:
+- Poll the Snowflake stage every 5 minutes for new CSV files
+- Download all part files
+- Merge them into a single CSV
+- Upload the merged CSV to S3
+- Verify MD5 checksum and row count
+- Remove the parts from the Snowflake stage (signals Snowflake to export the next table)
+- Stop after 2 hours of no activity
 
-```
-idr2/
-├── list_of_tables_to_download.csv   # Input: tables to export
-├── export_metadata.json             # Generated: table metadata
-├── example.env                      # Template for configuration
-├── .env                            # Your configuration (not in git)
-├── metadata_generator.py           # Script to generate metadata
-├── snowflake_export_loop.py        # Notebook script for export
-└── README.md                       # This file
+### Step 5 — Terminal 2 (Snowflake notebook)
 
-misc_scripts/
-├── download_and_merge_with_polling.sh  # Updated downloader
-├── snowflake_csv_merge.py             # CSV merge utility
-└── ... (other utilities)
-```
+1. Open your Snowflake Python notebook
+2. In **Cell 1**: paste the entire contents of `idr2/snowflake/cell1_snowflake_export_classes.py`
+3. In **Cell 2**: paste the entire contents of `idr2/snowflake/cell2_snowflake_export_notebook.py`
+4. Run **Cell 1** first (defines the classes)
+5. Run **Cell 2** (starts the export loop)
 
-## Performance Tuning
+The Snowflake notebook will:
+- Export tables one at a time to `@~/`
+- Wait until each file disappears from the stage (i.e., your laptop downloaded it)
+- Move to the next table
+- Stop after 2 hours of no activity
 
-### Reduce Download Time
-- Lower `POLLING_INTERVAL_MINUTES` to check more frequently (default: 5)
-- Ensure network connection is stable
-- Check Snowflake warehouse performance
+---
 
-### Increase Reliability
-- Set `QUIT_AFTER_HOURS` higher if downloads are slow (default: 2)
-- Monitor `download_progress.log` for patterns
-- Test with a small subset of tables first
+## Monitoring
+
+### Laptop output
+- Real-time status printed to terminal
+- Full log written to `$DOWNLOAD_DIRECTORY/download_progress.log`
+
+### Snowflake output
+- Export start/finish messages per table
+- Polling messages while waiting for download
+- Summary at the end
+
+---
 
 ## Troubleshooting
 
-### CSV Files Not Merging
-The merger combines all downloaded CSVs into consolidated files. If this fails:
+### Files stuck in Snowflake stage
 ```bash
-# Check if files were actually downloaded
-ls -la ~/cms_data_downloads_possible_pii/idr_data/unmerged_csv_files/
+# List
+snowsql -c cms_idr -q "LIST @~/ PATTERN='*.csv';"
 
-# Manually merge if needed
-python3 misc_scripts/snowflake_csv_merge.py ~/cms_data_downloads_possible_pii/idr_data/unmerged_csv_files/ --output-dir ~/cms_data_downloads_possible_pii/idr_data/
+# Remove manually
+snowsql -c cms_idr -q "REMOVE @~/ PATTERN='*.csv';"
 ```
 
-### Snowflake Stage Issues
-```bash
-# Verify you can access the stage
-snowsql -c cms_idr -q "LIST @~/ LIMIT 1;"
+### Downloader times out before Snowflake finishes
+Increase `QUIT_AFTER_HOURS` in `.env` and restart step 4.
 
-# Check snowsql config
-cat ~/.snowsql/config | grep -A 5 "cms_idr"
+### CSV merge fails
+```bash
+# Manual merge
+python3 misc_scripts/snowflake_csv_merge.py \
+    ~/cms_data_downloads_possible_pii/idr_data/unmerged_csv_files/ \
+    --output-dir ~/cms_data_downloads_possible_pii/idr_data/
 ```
 
-## Reference
-
-- **IDROutputter**: Base class for exports (see `idr/IDROutputter.py`)
-- **Original Downloader**: `misc_scripts/download_and_merge_all_snowflake_csv.sh`
-- **Auto-Generated Exports**: Examples in `idr/mdcr_prvdr/v2_*.py`
-
-## Support
-
-For issues:
-1. Check the README in main project directory
-2. Review logs in `misc_scripts/download_progress.log`
-3. Verify `.env` configuration
-4. Test with `metadata_generator.py` first
-5. Run Snowflake tests with a single table
+### Regenerate Cell 2 after changing table list
+Re-run steps 1–3, then replace Cell 2 content in your Snowflake notebook.

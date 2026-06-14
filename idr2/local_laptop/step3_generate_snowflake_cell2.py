@@ -23,7 +23,7 @@ from datetime import datetime
 
 def load_table_list():
     """Load the list of tables to download from CSV."""
-    csv_file = Path(__file__).parent / "list_of_tables_to_download.csv"
+    csv_file = Path(__file__).parent.parent / "step1_tables_to_export.csv"
     
     tables = []
     with open(csv_file, 'r') as f:
@@ -298,7 +298,7 @@ def main():
     print(f"  ✓ Generated metadata for {len(metadata_tables)} tables")
     
     print(f"\n4. Writing Snowflake notebook cell 2 script...")
-    output_file = Path(__file__).parent / "snowflake_notebook_cell_2.py"
+    output_file = Path(__file__).parent.parent / "snowflake" / "cell2_snowflake_export_notebook.py"
     write_cell2_script(output_file, metadata_tables)
     
     print(f"\n✓ Script generated successfully!")
@@ -306,8 +306,8 @@ def main():
     print(f"\n📋 Next steps:")
     print(f"  1. Open {output_file}")
     print(f"  2. Copy the entire contents")
-    print(f"  3. Paste into CELL 2 of your Snowflake notebook")
-    print(f"  4. Run the cell")
+    print(f"  3. Paste into CELL 2 of your Snowflake notebook (after cell1_snowflake_export_classes.py)")
+    print(f"  4. Run Cell 1 first, then run Cell 2")
     
     print("\n" + "="*60)
 

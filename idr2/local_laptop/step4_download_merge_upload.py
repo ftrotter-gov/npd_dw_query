@@ -50,8 +50,8 @@ def load_env(env_file):
 
 def find_project_root():
     """Find the project root (directory containing idr2/)."""
-    script_dir = Path(__file__).parent  # idr2/
-    return script_dir.parent
+    script_dir = Path(__file__).parent  # idr2/local_laptop/
+    return script_dir.parent.parent     # repo root
 
 
 def setup_config():
