@@ -39,7 +39,7 @@ class MetadataGenerator:
             # Try to find it relative to this script
             script_dir = Path(__file__).parent
             project_dir = script_dir.parent
-            json_cache_dir = project_dir / "misc_scripts" / "gen_extract_scripts" / "json_documentation_cache"
+            json_cache_dir = project_dir / "gen_extract_scripts" / "json_documentation_cache"
         
         self.json_cache_dir = Path(json_cache_dir)
         self.cached_metadata = {}  # Will hold loaded JSON files

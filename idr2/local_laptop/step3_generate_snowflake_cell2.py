@@ -39,21 +39,33 @@ def load_table_list():
 
 def load_cached_metadata():
     """Load all cached metadata from JSON files."""
-    cache_dir = Path(__file__).parent.parent / "misc_scripts" / "gen_extract_scripts" / "json_documentation_cache"
-    
+    # __file__ = idr2/local_laptop/step3_...py
+    # .parent        → idr2/local_laptop/
+    # .parent.parent → idr2/  ← gen_extract_scripts/ now lives here
+    cache_dir = Path(__file__).parent.parent / "gen_extract_scripts" / "json_documentation_cache"
+
+    if not cache_dir.exists():
+        print(f"⚠ WARNING: JSON cache directory not found: {cache_dir}")
+        print(f"  (looking for misc_scripts/gen_extract_scripts/json_documentation_cache/ in repo root)")
+        return {}
+
     cached = {}
-    for json_file in cache_dir.glob("*.json"):
+    for json_file in sorted(cache_dir.glob("*.json")):
         if json_file.name.startswith("test_") or json_file.name.startswith("sample_"):
             continue
-        
+
         try:
             with open(json_file, 'r') as f:
                 data = json.load(f)
                 cached[json_file.stem] = data
-                print(f"✓ Loaded {json_file.name}")
+                table_count = len(data.get('tables', []))
+                print(f"✓ Loaded {json_file.name}  ({table_count} tables)")
         except Exception as e:
             print(f"⚠ Could not load {json_file.name}: {e}")
-    
+
+    if not cached:
+        print("⚠ WARNING: No JSON cache files were loaded — all tables will use SELECT *")
+
     return cached
 
 
