@@ -162,73 +162,102 @@ class DownloadAreaWatcher:
     
     def list_files_in_stage(self):
         """
-        List all CSV files in the Snowflake user stage.
-        
+        List all CSV files currently in the Snowflake user stage.
+
+        Snowflake's LIST @~/ returns rows whose first column is the full stage
+        path, e.g. ``@~/myfile.csv`` or ``stage://~/username/myfile.csv``.
+        We normalise by stripping any leading path components so the result is
+        just a list of bare file names ending in ``.csv``.
+
         Returns:
-            list: List of file names in stage
+            list[str]: Bare file names (e.g. ``["table.v01.ts.csv"]``)
         """
         try:
             result = self.session.sql("LIST @~/").collect()
             files = []
             for row in result:
-                file_name = str(row[0]) if row else ""
-                if file_name.endswith('.csv'):
-                    files.append(file_name)
+                raw = str(row[0]) if row else ""
+                # Keep only the final path component
+                bare = raw.split("/")[-1]
+                if bare.endswith(".csv"):
+                    files.append(bare)
             return files
         except Exception as e:
             print(f"Error listing stage files: {e}")
             return []
-    
-    def wait_for_download(self, exported_file_name):
+
+    def wait_for_stage_empty(self):
         """
-        Wait for a file to be downloaded (deleted from stage).
-        
-        Polls the stage every polling_interval seconds.
-        Times out after quit_after_hours of no activity.
-        
-        Args:
-            exported_file_name: Name of file exported (e.g., @~/table.v01.timestamp.csv)
-        
+        Wait until the Snowflake user stage contains NO CSV files.
+
+        This is the correct gate between exports: the laptop downloads every
+        CSV file from the stage and deletes it; only when the stage is empty
+        is it safe to push the next table.
+
+        Polls every ``polling_interval`` seconds.
+        Returns False (timeout) if no file disappears within ``quit_after``
+        seconds of last observed change.
+
         Returns:
-            bool: True if file was downloaded (deleted), False if timeout
+            bool: True  – stage is now empty (safe to export next table)
+                  False – timed out waiting
         """
-        # Extract just the filename part for checking
-        check_name = exported_file_name.replace("@~/", "")
-        
-        print(f"\nWaiting for download of: {check_name}")
-        print(f"Polling every {self.polling_interval // 60} minutes...")
-        print(f"Timeout: {self.quit_after // 3600} hours with no activity")
-        
+        print(f"\nWaiting for stage to empty...")
+        print(f"Polling every {self.polling_interval // 60} min | "
+              f"Timeout {self.quit_after // 3600} h with no change")
+
         wait_start = datetime.now()
-        
+
         while True:
-            # Check elapsed time since task started
-            elapsed_since_start = (datetime.now() - self.start_time).total_seconds()
-            elapsed_since_change = (datetime.now() - self.last_change_time).total_seconds()
-            
-            # Timeout if no activity for specified hours
+            elapsed_since_change = (
+                datetime.now() - self.last_change_time
+            ).total_seconds()
+            elapsed_since_start = (
+                datetime.now() - self.start_time
+            ).total_seconds()
+
+            # Hard timeout: no file was removed for quit_after hours
             if elapsed_since_change > self.quit_after:
-                print(f"\nTIMEOUT: No download activity for {self.quit_after // 3600} hours")
-                print(f"Total elapsed time: {elapsed_since_start // 3600:.1f} hours")
+                print(
+                    f"\nTIMEOUT: no download activity for "
+                    f"{self.quit_after // 3600} h "
+                    f"(total elapsed {elapsed_since_start // 3600:.1f} h)"
+                )
                 return False
-            
-            # Check if file still exists
+
             files = self.list_files_in_stage()
-            
-            if check_name not in files:
+
+            if len(files) == 0:
                 elapsed = (datetime.now() - wait_start).total_seconds()
-                print(f"✓ Download complete! ({elapsed // 60:.0f} min, {elapsed % 60:.0f} sec)")
+                print(
+                    f"✓ Stage empty – download complete! "
+                    f"({elapsed // 60:.0f} min {elapsed % 60:.0f} sec)"
+                )
                 self.last_change_time = datetime.now()
                 return True
-            
-            # File still exists, wait and check again
-            print(f"  Waiting... ({elapsed_since_change // 60:.0f} min, {elapsed_since_change % 60:.0f} sec elapsed)")
-            
-            # Sleep for polling interval
+
+            # Still files present – report and sleep
+            print(
+                f"  Stage has {len(files)} file(s): {files} "
+                f"| waited {elapsed_since_change // 60:.0f} min so far"
+            )
+
             for i in range(self.polling_interval):
                 if i % 60 == 0 and i > 0:
-                    print(f"  Still waiting... ({(elapsed_since_change + i) // 60:.0f} min)")
+                    still = (elapsed_since_change + i) // 60
+                    print(f"  Still waiting... ({still:.0f} min)")
                 time.sleep(1)
+
+    def wait_for_download(self, exported_file_name):
+        """
+        Back-compat wrapper – delegates to wait_for_stage_empty().
+
+        The original per-file check had a name-format mismatch that caused it
+        to return True immediately without actually waiting.  Waiting for the
+        whole stage to be empty is the correct semantic anyway: the laptop must
+        download (and delete) every CSV before we push the next one.
+        """
+        return self.wait_for_stage_empty()
 
 
 class ExportLoop:
@@ -267,9 +296,20 @@ class ExportLoop:
         print(f"Polling interval: {self.polling_interval} minutes")
         print(f"Timeout: {self.quit_after} hours")
         print("="*60)
-        
+
         start_time = datetime.now()
-        
+
+        # ── Pre-flight: ensure stage is empty before we start ───────────────
+        existing = self.watcher.list_files_in_stage()
+        if existing:
+            print(f"\n⚠ Stage already has {len(existing)} file(s) from a previous run.")
+            print("  Waiting for them to be downloaded before starting exports...")
+            if not self.watcher.wait_for_stage_empty():
+                print("✗ Stage never emptied – aborting export loop.")
+                return
+        else:
+            print("\n✓ Stage is empty – ready to begin.")
+
         for idx, table_metadata in enumerate(tables, 1):
             print(f"\n[{idx}/{total}] Processing table: {table_metadata['full_table_name']}")
             

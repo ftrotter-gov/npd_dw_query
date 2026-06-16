@@ -258,6 +258,27 @@ def merge_one_group(project_root, part_files, merged_dir):
     new_files = sorted(after - before)
 
     if not new_files:
+        # The merged output may already exist from a previous interrupted run
+        # (e.g. script crashed after merge but before S3 upload).
+        # Derive the expected output filename from the first part-file name:
+        #   strip .gz / .csv, then strip the trailing _\d+_\d+_\d+ part number.
+        base = part_files[0].name
+        if base.endswith('.gz'):
+            base = base[:-3]
+        if base.endswith('.csv'):
+            base = base[:-4]
+        expected_root = re.sub(r'(_\d+_\d+_\d+)$', '', base)
+        if expected_root.endswith('.csv'):
+            expected_root = expected_root[:-4]
+        expected_output = merged_dir / f"{expected_root}.csv"
+
+        if expected_output.exists():
+            size_mb = expected_output.stat().st_size / (1024 * 1024)
+            log(f"  ⚠ Merge produced no new file, but a pre-existing merged file was found:")
+            log(f"    {expected_output.name}  ({size_mb:.1f} MB)")
+            log(f"  Resuming: treating pre-existing merged file as valid output")
+            return [expected_output], temp_dir
+
         log("  ⚠ Merge script ran but produced no new files")
         return [], temp_dir
 
@@ -540,16 +561,30 @@ def main():
     # ──────────────────────────────────────────────────────────────────────────
     # RESUME: process any leftover parts from a previous interrupted run
     # ──────────────────────────────────────────────────────────────────────────
-    existing_parts = list(download_dir.glob("*.csv"))
+    existing_parts = [f for f in download_dir.glob("*.csv")
+                      if f.name != "download_progress.log"]
     if existing_parts:
         log("=" * 60)
         log(f"RESUME: found {len(existing_parts)} pre-existing part file(s)")
         log("Running pipeline on leftover files before entering poll loop...")
-        # Do NOT remove from stage for the resume case — the stage was already
-        # cleared (or never had files). We just need to process the local parts.
+
+        # Check whether the stage ALSO still has files.
+        # This happens when the script crashed between GET (download) and
+        # REMOVE @~/  — both local parts and stage files survive the crash.
+        # In that case we MUST send REMOVE after S3 validation so Snowflake
+        # knows it is safe to export the next table.
+        # If only local files exist (stage already cleared), skip REMOVE.
+        stage_files_on_resume = list_stage_files(snowsql_path, snowflake_config)
+        remove_stage_on_resume = len(stage_files_on_resume) > 0
+        if remove_stage_on_resume:
+            log(f"  Stage also has {len(stage_files_on_resume)} file(s) — "
+                f"will REMOVE @~/ after successful S3 validation")
+        else:
+            log("  Stage is already empty — no REMOVE needed for resume")
+
         run_pipeline(project_root, download_dir, merged_dir,
                      snowsql_path, snowflake_config, s3_destination,
-                     remove_from_stage=False)
+                     remove_from_stage=remove_stage_on_resume)
         log("Resume processing complete. Entering poll loop.")
     else:
         log("No pre-existing parts found — starting fresh poll loop.")
