@@ -121,15 +121,40 @@ OVERWRITE = TRUE;
             
             # Execute the export
             result = self.session.sql(copy_sql).collect()
-            
-            print(f"Export completed for {self.full_table_name}")
-            
+
+            # COPY INTO <location> returns one row with ROWS_UNLOADED,
+            # INPUT_BYTES, OUTPUT_BYTES.  If the source table is empty,
+            # ROWS_UNLOADED == 0 and NO file is written to the stage.
+            # We must detect this and skip the download-wait, otherwise
+            # wait_for_stage_empty Phase 1 will block for 5 minutes.
+            rows_unloaded = -1  # unknown / non-parseable
+            if result:
+                try:
+                    rows_unloaded = int(result[0]['ROWS_UNLOADED'])
+                except (KeyError, TypeError):
+                    try:
+                        rows_unloaded = int(result[0][0])
+                    except (IndexError, TypeError):
+                        pass
+
+            if rows_unloaded == 0:
+                print(f"⊘ Table is empty – 0 rows exported, no file written to stage")
+                return {
+                    'status': 'EMPTY',
+                    'table': self.full_table_name,
+                    'rows_unloaded': 0,
+                }
+
+            print(f"Export completed for {self.full_table_name}"
+                  + (f" ({rows_unloaded:,} rows)" if rows_unloaded > 0 else ""))
+
             return {
                 'status': 'SUCCESS',
                 'table': self.full_table_name,
                 'file_name': file_name,
                 'file_name_stub': self.file_name_stub,
                 'timestamp': ts,
+                'rows_unloaded': rows_unloaded,
                 'result': str(result) if result else 'OK'
             }
         
@@ -194,9 +219,15 @@ class DownloadAreaWatcher:
         CSV file from the stage and deletes it; only when the stage is empty
         is it safe to push the next table.
 
-        Polls every ``polling_interval`` seconds.
-        Returns False (timeout) if no file disappears within ``quit_after``
-        seconds of last observed change.
+        Two-phase approach:
+          Phase 1 – Confirm the exported file(s) actually appear in LIST @~/.
+                    COPY INTO can return before the file is visible in the
+                    stage directory listing (propagation lag).  We poll every
+                    10 s for up to 5 minutes.  If the file never appears we
+                    log a warning and skip straight to Phase 2 (belt-and-
+                    suspenders: the laptop may have already grabbed it).
+          Phase 2 – Wait until the stage has ZERO CSV files.  The laptop
+                    signals completion by removing every file it downloads.
 
         Returns:
             bool: True  – stage is now empty (safe to export next table)
@@ -206,6 +237,32 @@ class DownloadAreaWatcher:
         print(f"Polling every {self.polling_interval // 60} min | "
               f"Timeout {self.quit_after // 3600} h with no change")
 
+        # ── Phase 1: confirm file appears in stage ───────────────────────────
+        # After COPY INTO returns, Snowflake may take a few seconds to make
+        # the file visible in LIST @~/. Without this check we immediately see
+        # 0 files and declare "stage empty" — a false negative.
+        APPEAR_TIMEOUT_S  = 300   # give up confirming after 5 minutes
+        APPEAR_POLL_S     = 10    # re-check every 10 seconds
+        appear_start      = datetime.now()
+
+        print("  Phase 1: confirming export is visible in stage listing...")
+        while True:
+            files = self.list_files_in_stage()
+            if len(files) > 0:
+                print(f"  ✓ {len(files)} file(s) confirmed visible in stage — "
+                      f"entering download-wait loop")
+                self.last_change_time = datetime.now()
+                break
+            elapsed_appear = (datetime.now() - appear_start).total_seconds()
+            if elapsed_appear > APPEAR_TIMEOUT_S:
+                print(f"  ⚠ File never appeared in stage listing after "
+                      f"{APPEAR_TIMEOUT_S}s.  Proceeding to Phase 2 anyway "
+                      f"(laptop may have already downloaded it).")
+                break
+            print(f"  Waiting for file to appear... ({elapsed_appear:.0f}s)")
+            time.sleep(APPEAR_POLL_S)
+
+        # ── Phase 2: wait for stage to become empty ───────────────────────────
         wait_start = datetime.now()
 
         while True:
@@ -236,17 +293,15 @@ class DownloadAreaWatcher:
                 self.last_change_time = datetime.now()
                 return True
 
-            # Still files present – report and sleep
+            # Still files present – report count only (not the full list)
+            sample = files[0] if files else ""
             print(
-                f"  Stage has {len(files)} file(s): {files} "
-                f"| waited {elapsed_since_change // 60:.0f} min so far"
+                f"  Stage has {len(files)} file(s)  "
+                f"(e.g. {sample})  "
+                f"| waited {elapsed_since_change // 60:.0f} min so far – "
+                f"rechecking in 1 min"
             )
-
-            for i in range(self.polling_interval):
-                if i % 60 == 0 and i > 0:
-                    still = (elapsed_since_change + i) // 60
-                    print(f"  Still waiting... ({still:.0f} min)")
-                time.sleep(1)
+            time.sleep(60)  # poll every 1 minute regardless of POLLING_INTERVAL
 
     def wait_for_download(self, exported_file_name):
         """
@@ -318,22 +373,30 @@ class ExportLoop:
                 exporter = SnowflakeExporter(self.session, table_metadata)
                 export_result = exporter.export_table()
                 
-                if export_result['status'] == 'FAILED':
+                status = export_result['status']
+
+                if status == 'FAILED':
                     print(f"✗ Export failed for {table_metadata['full_table_name']}")
                     self.failed_tables.append(table_metadata['full_table_name'])
                     continue
-                
+
+                if status == 'EMPTY':
+                    # Source table had 0 rows – COPY INTO wrote no file to the
+                    # stage, so there is nothing to download.  Skip the wait.
+                    print(f"⊘ Table is empty – skipping download wait, moving to next table")
+                    self.completed_tables.append(table_metadata['full_table_name'])
+                    continue
+
+                # status == 'SUCCESS' — file was written; wait for download
                 exported_file = export_result['file_name']
-                
-                # Wait for the file to be downloaded
                 download_success = self.watcher.wait_for_download(exported_file)
-                
+
                 if download_success:
                     self.completed_tables.append(table_metadata['full_table_name'])
                     print(f"✓ Successfully exported and downloaded table {idx}/{total}")
                 else:
                     self.skipped_tables.append(table_metadata['full_table_name'])
-                    print(f"⊗ Download timeout for table {idx}/{total} - continuing with next")
+                    print(f"⊗ Download timeout for table {idx}/{total} - stopping loop")
                     break  # Stop processing if timeout reached
             
             except Exception as e:

@@ -646,14 +646,8 @@ def main():
         else:
             log("  No files in stage — waiting for Snowflake to export next table...")
 
-        log(f"Sleeping {polling_interval_minutes} min until next check...")
-        elapsed_wait = 0
-        while elapsed_wait < polling_interval_seconds:
-            time.sleep(60)
-            elapsed_wait += 60
-            remaining = (polling_interval_seconds - elapsed_wait) // 60
-            if elapsed_wait < polling_interval_seconds:
-                log(f"  ... {remaining:.0f} min until next check")
+        log("Sleeping 2 min until next stage check...")
+        time.sleep(120)
 
     total_elapsed = time.time() - start_time
     log("=" * 60)
