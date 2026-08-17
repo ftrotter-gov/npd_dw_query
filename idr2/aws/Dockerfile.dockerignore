@@ -1,0 +1,10 @@
+# Keep the image small and free of local/secret cruft.
+# Context is the repo root; only idr2/ is COPYed, but exclude noise anyway.
+**/.git
+**/.venv
+**/__pycache__
+**/*.pyc
+**/.DS_Store
+idr2/.env
+idr2/**/json_documentation_cache
+idr2/**/*.csv.gz

@@ -1,0 +1,39 @@
+{
+  "family": "idr2-orchestrator",
+  "requiresCompatibilities": ["FARGATE"],
+  "networkMode": "awsvpc",
+  "cpu": "512",
+  "memory": "1024",
+  "ephemeralStorage": { "sizeInGiB": 50 },
+  "runtimePlatform": {
+    "cpuArchitecture": "X86_64",
+    "operatingSystemFamily": "LINUX"
+  },
+  "executionRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/idr2-orchestrator-execution-role",
+  "taskRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/idr2-orchestrator-task-role",
+  "containerDefinitions": [
+    {
+      "name": "orchestrator",
+      "image": "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/idr2-orchestrator:latest",
+      "essential": true,
+      "environment": [
+        { "name": "SNOWFLAKE_ACCOUNT", "value": "${SNOWFLAKE_ACCOUNT}" },
+        { "name": "SNOWFLAKE_USER", "value": "${SNOWFLAKE_USER}" },
+        { "name": "SNOWFLAKE_ROLE", "value": "${SNOWFLAKE_ROLE}" },
+        { "name": "SNOWFLAKE_WAREHOUSE", "value": "${SNOWFLAKE_WAREHOUSE}" },
+        { "name": "S3_BUCKET", "value": "${S3_BUCKET}" },
+        { "name": "WATERMARK_COLUMN", "value": "${WATERMARK_COLUMN}" },
+        { "name": "SNOWFLAKE_PAT_SECRET_ID", "value": "${PAT_SECRET_ID}" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/idr2-orchestrator",
+          "awslogs-region": "${AWS_REGION}",
+          "awslogs-stream-prefix": "orchestrator",
+          "awslogs-create-group": "true"
+        }
+      }
+    }
+  ]
+}
