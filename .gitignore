@@ -57,3 +57,6 @@ secrets*
 .tmp/
 *.tmp
 *.bak
+
+# Local IDR extract outputs (PII/PHI — never commit)
+idr_data/
