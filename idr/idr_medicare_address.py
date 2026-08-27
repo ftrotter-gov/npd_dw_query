@@ -1,12 +1,13 @@
 """
-IDR Medicaid provider-address export — standalone Snowflake → local CSV (optional → S3).
+IDR Medicare provider-address export — standalone Snowflake → local CSV (optional → S3).
 
-Derives provider service-location addresses from one year of Medicaid claims in
-IDR (V2_MDCD_CLM). Every claim contributes its admitting, billing, supervising and
-service-location-org NPI, each paired with the claim's service-location address and
-the recipient's State Medicaid ID; the result is aggregated per (NPI, address) with
-the count of distinct Medicaid recipients and suppressed below a small-cell
-threshold. See build_address_sql() for the query.
+Derives provider service-location addresses from one year of Medicare professional
+claims in IDR (V2_MDCR_CLM joined to V2_MDCR_CLM_LINE_PRFNL). Every claim contributes
+its provider NPIs (attending, billing, rendering, operating, other, facility, and the
+resolved service/attending/billing/operating/other provider NPIs), each paired with
+the claim line's place-of-service provider address; the result is aggregated per
+(NPI, address) with the count of distinct beneficiaries (GEO_BENE_SK) and suppressed
+below a small-cell threshold. See build_address_sql() for the query.
 
 WHY THIS SHAPE: the original was a Streamlit-in-Snowflake / Snowsight worksheet
 script (`get_active_session()`), which only runs *inside* Snowflake. This version
@@ -45,15 +46,15 @@ Dependencies (NOT in requirements.txt, which targets the Snowsight runtime):
 Local (laptop) run — picks up ~/.config/idr2/snowflake_pat automatically:
     SNOWFLAKE_ACCOUNT=<account> \
     SNOWFLAKE_USER=<user> \
-    SNOWFLAKE_ROLE=<idr role with Medicaid claims access> \
+    SNOWFLAKE_ROLE=<idr role with Medicare claims access> \
     SNOWFLAKE_WAREHOUSE=IDRC_PRD_COMM_WH \
     OUTPUT_DIR=./idr_data \
-    python3 idr/idr_medicaid_address.py
+    python3 idr/idr_medicare_address.py
 
     # Pull the PAT from AWS Secrets Manager instead of a local file:
     #   AWS_PROFILE=<Kion STAK> AWS_REGION=us-east-1 SNOWFLAKE_PAT_SECRET_ID=idr2/snowflake-pat ...
     # Also land the CSV in S3 (like the orchestrator):
-    #   S3_BUCKET=s3://<bucket>/idr_medicaid_address/
+    #   S3_BUCKET=s3://<bucket>/idr_medicare_address/
     # PAT expired? force browser SSO:
     #   SNOWFLAKE_AUTHENTICATOR=externalbrowser
 
@@ -63,11 +64,11 @@ Tunables (all optional; defaults reproduce the intended behavior):
     CLAIM_WINDOW_LAG_MONTHS how far before "now" the window ends (default 2)
     MIN_BENE                small-cell suppression threshold    (default 10)
 
-NOTE (carried over from the source query, deliberately unchanged): the SELECT and
-GROUP BY keep YEAR(CLM_THRU_DT) AS claim_year. With a rolling window that spans two
-calendar years, a single (NPI, address) can emit up to two rows and the small-cell
-suppression is applied per calendar-year half. Drop claim_year from the SELECT and
-GROUP BY if you want exactly one row per (NPI, address) over the full window.
+NOTE: the output grain is one row per (NPI, address) over the full window.
+CLM_THRU_DT is carried through the CTEs only to filter the claim window in the WHERE
+clause — it is not projected or grouped. Add YEAR(CLM_THRU_DT) AS claim_year to both
+the SELECT and GROUP BY if you instead want per-calendar-year rows (small-cell
+suppression then applies per year).
 """
 
 import os
@@ -324,27 +325,29 @@ def compute_window(cfg):
 
 
 # ============================================================================
-# MEDICAID ADDRESS QUERY
+# MEDICARE ADDRESS QUERY
 # ============================================================================
 
 def build_address_sql(stage_target, start_sql, end_sql, min_bene):
     """
     COPY INTO @~/<file>.csv the provider service-location addresses seen on one
-    window of Medicaid claims. Each claim contributes its admitting, billing,
-    supervising and service-location-org NPI, each paired with the claim's
-    service-location address and the recipient's State Medicaid ID; the output is
-    (claim_year, NPI, address) with the count of distinct recipients, suppressed
-    at > min_bene. One uncompressed, headered CSV (SINGLE=TRUE).
+    window of Medicare professional claims. Each claim contributes its provider
+    NPIs (attending, billing, rendering, operating, other, facility, and the
+    resolved service/attending/billing/operating/other provider NPIs), each paired
+    with the claim line's place-of-service provider address; the output is
+    (NPI, address) with the count of distinct beneficiaries (GEO_BENE_SK),
+    suppressed at > min_bene. One uncompressed, headered CSV (SINGLE=TRUE).
 
-    BUG FIXES vs. the Snowsight source:
-      * window: the source hardcoded YEAR(CLM_THRU_DT) = 2026, ignoring the
-        computed rolling window; this filters CLM_THRU_DT to [start, end).
-      * output name: caller writes @~/idr_medicaid_address.* (the source reused
-        the entity-linkage name, which collides with that extract on the stage
-        and in the CSV merger's filename-root grouping).
-    Upstream improvements kept: recipient key CLM_RCPNT_STATE_MDCD_ID (was the
-    Medicare-only CLM_BENE MBI, which restricted counts to dual-eligibles) and
-    the supervising-provider NPI union branch.
+    BUG FIXES vs. the source:
+      * CLM_THRU_DT was referenced by the outer SELECT/WHERE but never projected
+        through joined_claims / claim_npis, so the query would not compile; it is
+        now carried through the CTEs and used only in the WHERE window filter.
+      * the claim-line NPI columns were qualified CLINE.PRVDR_*_NPI_NUM, which do
+        not exist on V2_MDCR_CLM_LINE_PRFNL; those NPIs live on V2_MDCR_CLM and are
+        now read from CLAIM.
+      * output name: caller writes @~/idr_medicare_address.* (the source reused the
+        Medicaid / entity-linkage name, which collides with those extracts on the
+        stage and in the CSV merger's filename-root grouping).
     """
     return f"""
 COPY INTO {stage_target}
@@ -354,6 +357,7 @@ FROM (
 WITH joined_claims AS (
     SELECT
         CLAIM.GEO_BENE_SK,
+        CLAIM.CLM_THRU_DT,
 
         CLAIM.CLM_ATNDG_PRVDR_NPI_NUM,
         CLAIM.CLM_BLG_PRVDR_NPI_NUM,
@@ -362,11 +366,11 @@ WITH joined_claims AS (
         CLAIM.CLM_OPRTG_PRVDR_NPI_NUM,
         CLAIM.CLM_FAC_PRVDR_NPI_NUM,
 
-        CLINE.PRVDR_SRVC_PRVDR_NPI_NUM,
-        CLINE.PRVDR_ATNDG_PRVDR_NPI_NUM,
-        CLINE.PRVDR_BLG_PRVDR_NPI_NUM,
-        CLINE.PRVDR_OPRTG_PRVDR_NPI_NUM,
-        CLINE.PRVDR_OTHR_PRVDR_NPI_NUM,
+        CLAIM.PRVDR_SRVC_PRVDR_NPI_NUM,
+        CLAIM.PRVDR_ATNDG_PRVDR_NPI_NUM,
+        CLAIM.PRVDR_BLG_PRVDR_NPI_NUM,
+        CLAIM.PRVDR_OPRTG_PRVDR_NPI_NUM,
+        CLAIM.PRVDR_OTHR_PRVDR_NPI_NUM,
 
         CLINE.CLM_POS_PRVDR_1ST_LINE_ADR,
         CLINE.CLM_POS_PRVDR_2ND_LINE_ADR,
@@ -385,6 +389,7 @@ WITH joined_claims AS (
 claim_npis AS (
     SELECT
         GEO_BENE_SK,
+        CLM_THRU_DT,
         CLM_ATNDG_PRVDR_NPI_NUM AS NPI,
         CLM_POS_PRVDR_1ST_LINE_ADR,
         CLM_POS_PRVDR_2ND_LINE_ADR,
@@ -398,6 +403,7 @@ claim_npis AS (
 
     SELECT
         GEO_BENE_SK,
+        CLM_THRU_DT,
         CLM_BLG_PRVDR_NPI_NUM AS NPI,
         CLM_POS_PRVDR_1ST_LINE_ADR,
         CLM_POS_PRVDR_2ND_LINE_ADR,
@@ -411,6 +417,7 @@ claim_npis AS (
 
     SELECT
         GEO_BENE_SK,
+        CLM_THRU_DT,
         CLM_RNDRG_PRVDR_NPI_NUM AS NPI,
         CLM_POS_PRVDR_1ST_LINE_ADR,
         CLM_POS_PRVDR_2ND_LINE_ADR,
@@ -424,6 +431,7 @@ claim_npis AS (
 
     SELECT
         GEO_BENE_SK,
+        CLM_THRU_DT,
         CLM_OTHR_PRVDR_NPI_NUM AS NPI,
         CLM_POS_PRVDR_1ST_LINE_ADR,
         CLM_POS_PRVDR_2ND_LINE_ADR,
@@ -437,6 +445,7 @@ claim_npis AS (
 
     SELECT
         GEO_BENE_SK,
+        CLM_THRU_DT,
         CLM_OPRTG_PRVDR_NPI_NUM AS NPI,
         CLM_POS_PRVDR_1ST_LINE_ADR,
         CLM_POS_PRVDR_2ND_LINE_ADR,
@@ -450,6 +459,7 @@ claim_npis AS (
 
     SELECT
         GEO_BENE_SK,
+        CLM_THRU_DT,
         CLM_FAC_PRVDR_NPI_NUM AS NPI,
         CLM_POS_PRVDR_1ST_LINE_ADR,
         CLM_POS_PRVDR_2ND_LINE_ADR,
@@ -463,6 +473,7 @@ claim_npis AS (
 
     SELECT
         GEO_BENE_SK,
+        CLM_THRU_DT,
         PRVDR_SRVC_PRVDR_NPI_NUM AS NPI,
         CLM_POS_PRVDR_1ST_LINE_ADR,
         CLM_POS_PRVDR_2ND_LINE_ADR,
@@ -476,6 +487,7 @@ claim_npis AS (
 
     SELECT
         GEO_BENE_SK,
+        CLM_THRU_DT,
         PRVDR_ATNDG_PRVDR_NPI_NUM AS NPI,
         CLM_POS_PRVDR_1ST_LINE_ADR,
         CLM_POS_PRVDR_2ND_LINE_ADR,
@@ -489,6 +501,7 @@ claim_npis AS (
 
     SELECT
         GEO_BENE_SK,
+        CLM_THRU_DT,
         PRVDR_BLG_PRVDR_NPI_NUM AS NPI,
         CLM_POS_PRVDR_1ST_LINE_ADR,
         CLM_POS_PRVDR_2ND_LINE_ADR,
@@ -502,6 +515,7 @@ claim_npis AS (
 
     SELECT
         GEO_BENE_SK,
+        CLM_THRU_DT,
         PRVDR_OPRTG_PRVDR_NPI_NUM AS NPI,
         CLM_POS_PRVDR_1ST_LINE_ADR,
         CLM_POS_PRVDR_2ND_LINE_ADR,
@@ -515,6 +529,7 @@ claim_npis AS (
 
     SELECT
         GEO_BENE_SK,
+        CLM_THRU_DT,
         PRVDR_OTHR_PRVDR_NPI_NUM AS NPI,
         CLM_POS_PRVDR_1ST_LINE_ADR,
         CLM_POS_PRVDR_2ND_LINE_ADR,
@@ -526,7 +541,6 @@ claim_npis AS (
 )
 
 SELECT
-    CLM_THRU_DT,
     NPI,
     CLM_POS_PRVDR_1ST_LINE_ADR,
     CLM_POS_PRVDR_2ND_LINE_ADR,
@@ -641,16 +655,16 @@ def upload_and_validate(local_file, s3_bucket):
 
 def main():
     log("=" * 60)
-    log("IDR Medicaid provider-address export — Snowflake → local CSV (optional → S3)")
+    log("IDR Medicare provider-address export — Snowflake → local CSV (optional → S3)")
     log("=" * 60)
 
     cfg = load_config()
     start, end = compute_window(cfg)
     log(f"Claim window : {start.isoformat()} → {end.isoformat()} "
         f"({cfg['window_months']}mo ending {cfg['window_lag_months']}mo back)")
-    log(f"Min distinct recipients (small-cell) : > {cfg['min_bene']}")
+    log(f"Min distinct beneficiaries (small-cell) : > {cfg['min_bene']}")
 
-    filename = f"idr_medicaid_address.{start:%Y_%m_%d}_to_{end:%Y_%m_%d}.csv"
+    filename = f"idr_medicare_address.{start:%Y_%m_%d}_to_{end:%Y_%m_%d}.csv"
     sql = build_address_sql(f"@~/{filename}", start.isoformat(), end.isoformat(), cfg["min_bene"])
 
     auth_kwargs = resolve_auth(cfg)
