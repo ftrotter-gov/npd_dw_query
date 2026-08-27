@@ -1,0 +1,21 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "RunTheTask",
+      "Effect": "Allow",
+      "Action": "ecs:RunTask",
+      "Resource": "arn:aws:ecs:${AWS_REGION}:${AWS_ACCOUNT_ID}:task-definition/idr2-orchestrator:*"
+    },
+    {
+      "Sid": "PassTaskRoles",
+      "Effect": "Allow",
+      "Action": "iam:PassRole",
+      "Resource": [
+        "arn:aws:iam::${AWS_ACCOUNT_ID}:role/idr2-orchestrator-execution-role",
+        "arn:aws:iam::${AWS_ACCOUNT_ID}:role/idr2-orchestrator-task-role"
+      ],
+      "Condition": { "StringLike": { "iam:PassedToService": "ecs-tasks.amazonaws.com" } }
+    }
+  ]
+}

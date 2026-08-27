@@ -1,0 +1,4 @@
+# Your real deploy values and the concrete JSON rendered from templates.
+# These contain account id / network ids — never commit them.
+deploy.env
+rendered/

@@ -1,0 +1,28 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "WriteExports",
+      "Effect": "Allow",
+      "Action": [
+        "s3:PutObject",
+        "s3:GetObject",
+        "s3:HeadObject"
+      ],
+      "Resource": "arn:aws:s3:::<S3_BUCKET>/idr_bulk/*"
+    },
+    {
+      "Sid": "ListBucketPrefix",
+      "Effect": "Allow",
+      "Action": "s3:ListBucket",
+      "Resource": "arn:aws:s3:::<S3_BUCKET>",
+      "Condition": { "StringLike": { "s3:prefix": "idr_bulk/*" } }
+    },
+    {
+      "Sid": "ReadSnowflakePat",
+      "Effect": "Allow",
+      "Action": "secretsmanager:GetSecretValue",
+      "Resource": "arn:aws:secretsmanager:${AWS_REGION}:${AWS_ACCOUNT_ID}:secret:${PAT_SECRET_ID}*"
+    }
+  ]
+}

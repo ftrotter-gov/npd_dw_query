@@ -1,0 +1,25 @@
+{
+  "Name": "idr2-orchestrator-weekly",
+  "Description": "Weekly IDR Snowflake -> S3 export (idr2 orchestrator on Fargate).",
+  "ScheduleExpression": "cron(23 6 ? * SUN *)",
+  "ScheduleExpressionTimezone": "UTC",
+  "FlexibleTimeWindow": { "Mode": "OFF" },
+  "State": "ENABLED",
+  "Target": {
+    "Arn": "arn:aws:ecs:${AWS_REGION}:${AWS_ACCOUNT_ID}:cluster/${ECS_CLUSTER}",
+    "RoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/idr2-scheduler-invoke-role",
+    "EcsParameters": {
+      "TaskDefinitionArn": "arn:aws:ecs:${AWS_REGION}:${AWS_ACCOUNT_ID}:task-definition/idr2-orchestrator",
+      "LaunchType": "FARGATE",
+      "TaskCount": 1,
+      "NetworkConfiguration": {
+        "awsvpcConfiguration": {
+          "Subnets": ["${SUBNET_A}", "${SUBNET_B}"],
+          "SecurityGroups": ["${SECURITY_GROUP}"],
+          "AssignPublicIp": "DISABLED"
+        }
+      }
+    },
+    "RetryPolicy": { "MaximumRetryAttempts": 0 }
+  }
+}
