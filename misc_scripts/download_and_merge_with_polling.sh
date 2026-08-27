@@ -1,7 +1,14 @@
 #!/bin/bash
-# 
+#
+# LEGACY / SECONDARY PATH. The maintained per-table pipeline is
+#   idr2/local_laptop/step4_download_merge_upload.py   (download→merge→S3, reconciled)
+#   idr2/aws/orchestrator.py                           (single-process, SINGLE=TRUE)
+# Prefer those. This script is kept for the batch-accumulate-then-merge-once
+# workflow. It now uses SCOPED, reconciled stage removal (see below) so a
+# partial GET can never trigger a blanket wipe of un-downloaded parts.
+#
 # Parallel Snowflake CSV Download with Polling
-# 
+#
 # This script coordinates with the Snowflake export loop to download exported CSV files.
 # It monitors the Snowflake stage (@~/) for new files and downloads them automatically.
 # Files are deleted from Snowflake after successful download.
@@ -108,18 +115,54 @@ download_all_files() {
     fi
 }
 
-# Function to remove ALL csv files from stage at once (single snowsql auth)
-remove_all_stage_files() {
-    log "Removing downloaded files from stage..."
-    
-    if "$SNOWSQL_PATH" -c "$SNOWFLAKE_CONFIG" -q "REMOVE @~/ PATTERN='.*.csv';" > /dev/null 2>&1; then
-        log "✓ Stage cleared"
-        LAST_ACTIVITY_TIME=$(date +%s)
-        return 0
+# Remove ONLY the named files that were listed this iteration AND now exist
+# locally — SCOPED, never a blanket PATTERN wipe.
+#
+# The old `REMOVE @~/ PATTERN='.*.csv'` deleted every csv in the stage. If the
+# GET only partially succeeded (network drop on one part), or Snowflake wrote a
+# new table's parts between GET and REMOVE, the blanket wipe destroyed
+# un-downloaded parts — silent data loss. Here we remove a file only after
+# confirming it landed on local disk; anything not downloaded is KEPT in the
+# stage (the loop will pick it up next pass). Returns non-zero if any listed
+# file was not downloaded, so the caller knows the batch was incomplete.
+remove_downloaded_stage_files() {
+    local names="$1"
+    local removed=0 skipped=0
+    log "Removing downloaded files from stage (scoped, single snowsql session)..."
+    # Build ONE query holding a scoped `REMOVE @~/<file>;` for every file we
+    # confirmed on local disk. Files NOT downloaded are omitted (kept in the
+    # stage for retry). Sending the batch in a single snowsql call means auth
+    # happens ONCE — the old loop ran one snowsql process per file, and with
+    # external-browser auth that popped a browser window per file. Still fully
+    # scoped per name; still no blanket PATTERN wipe.
+    local batch=""
+    while IFS= read -r remote; do
+        [ -z "$remote" ] && continue
+        local base
+        base="$(basename "$remote")"
+        if [ -f "$DOWNLOAD_DIR/$base" ]; then
+            batch+="REMOVE @~/$base;"$'\n'
+            removed=$((removed + 1))
+        else
+            skipped=$((skipped + 1))
+            log "  ⚠ KEEPING @~/$base — not found on local disk (download incomplete)"
+        fi
+    done <<< "$names"
+
+    local ok=0
+    if [ "$removed" -gt 0 ]; then
+        if "$SNOWSQL_PATH" -c "$SNOWFLAKE_CONFIG" -q "$batch" > /dev/null 2>&1; then
+            ok=1
+        else
+            log "  ✗ Batched scoped REMOVE failed — stage may be partially cleared"
+        fi
     else
-        log "✗ Failed to clear stage"
-        return 1
+        ok=1  # nothing to remove this pass
     fi
+
+    log "✓ Stage scoped-remove: $removed removed (1 auth), $skipped kept (not downloaded)"
+    LAST_ACTIVITY_TIME=$(date +%s)
+    [ "$skipped" -eq 0 ] && [ "$ok" -eq 1 ]
 }
 
 # Main polling loop
@@ -157,7 +200,12 @@ while true; do
         # Download ALL files in one snowsql call, then remove all in one snowsql call
         # This avoids re-authenticating per file (like original download_and_merge_all_snowflake_csv.sh)
         if download_all_files; then
-            remove_all_stage_files
+            # Scoped, reconciled removal: only deletes stage files confirmed
+            # present locally. If any listed file did not download, it is KEPT
+            # in the stage and retried next pass (no blanket wipe, no loss).
+            if ! remove_downloaded_stage_files "$STAGE_FILES"; then
+                log "⚠ Batch incomplete — some stage files were kept for retry"
+            fi
             LAST_ACTIVITY_TIME=$(date +%s)
         fi
         
