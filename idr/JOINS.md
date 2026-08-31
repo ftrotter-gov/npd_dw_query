@@ -132,3 +132,82 @@ LEFT   JOIN medicaid_id_crosswalk x
        ON x.PRVDR_ID = e.CLM_BLG_PRVDR_NPI_NUM
       AND x.PRVDR_MDCD_ID_TYPE_CD = '2'          -- NPI rows only
 ```
+
+---
+
+## Worked example — Arkansas Heart Hospital (NPI 1558653212)
+
+A single NPI that lands in all four files, so it exercises both crosswalks and
+the cross-program bridge. (Federal tax number masked here as `56-XXXXXXX`.)
+
+### The two join spines
+
+```
+  NPI ............ in every file  (the universal key)
+  OSCAR/CCN ...... Medicare side only  (institutional identifier)
+  State Medicaid ID (PRVDR_STATE_MDCD_ID + SUBMTG_MDCD_LCL_STATE_CD)
+                   Medicaid crosswalk's native key -- reached THROUGH the NPI
+```
+
+### A. Medicare extract → NPI↔OSCAR crosswalk
+
+Join on the billing NPI: `medicare.CLM_BLG_PRVDR_NPI_NUM = npi_oscar.PRVDR_NPI_NUM`
+
+```
+ MEDICARE EXTRACT ROW
+   CLM_BLG_PRVDR_NPI_NUM = 1558653212
+   OSCAR = 040134   POS = 1901 ENCORE WAY, BENTON, AR   CNT_BENE = 18
+        │
+        │  JOIN  CLM_BLG_PRVDR_NPI_NUM = PRVDR_NPI_NUM
+        ▼
+ npi_oscar CROSSWALK  (association table -> fans out over time)
+   NPI 1558653212 │ OSCAR 040134 │ BGN 2011-10-13 │ MEDCATH OF LITTLE ROCK LLC   │ 56-XXXXXXX │ 1701 S SHACKLEFORD RD, LITTLE ROCK AR
+   NPI 1558653212 │ OSCAR 040134 │ BGN 2013-04-30 │ ARKANSAS HEART HOSPITAL,LLC  │ 56-XXXXXXX │ 1701 S SHACKLEFORD RD, LITTLE ROCK AR
+   NPI 1558653212 │ OSCAR 040134 │ BGN 2019-01-16 │ ARKANSAS HEART HOSPITAL LLC  │ 56-XXXXXXX │ 1701 S SHACKLEFORD RD, LITTLE ROCK AR
+```
+
+The 3 rows are the **fan-out caveat**: same NPI, renamed entity over time. Collapse
+by deduping the columns you need, or point-in-time with
+`<claim date> BETWEEN PRVDR_NPI_OSCAR_BGN_DT AND PRVDR_NPI_OSCAR_END_DT`.
+
+### B. Medicaid extract → Medicaid ID crosswalk
+
+The crosswalk is keyed on state Medicaid ID, so bridge through the NPI rows
+(`PRVDR_MDCD_ID_TYPE_CD = '2'`):
+`medicaid.CLM_BLG_PRVDR_NPI_NUM = medicaid_id.PRVDR_ID  AND  TYPE_CD = '2'`
+
+```
+ MEDICAID EXTRACT ROW
+   CLM_BLG_PRVDR_NPI_NUM = 1558653212   CNT_RECIPIENTS = 2964
+        │
+        │  JOIN  PRVDR_ID = CLM_BLG_PRVDR_NPI_NUM  AND  PRVDR_MDCD_ID_TYPE_CD = '2'
+        ▼
+ medicaid_id CROSSWALK  (state-scoped -> same NPI, different state IDs)
+   STATE_MDCD_ID 769850343001 │ state 22 (LA) │ ARKANSAS HEART HOSPITAL LLC
+   STATE_MDCD_ID 234152002    │ state 05 (AR) │ ARKANSAS HEART HOSPITAL,LLC
+        │
+        │  2nd hop: re-query the SAME (STATE_MDCD_ID, STATE) key with other TYPE_CD
+        ▼        3 -> Medicare id | 5 -> federal tax id | 4 -> NCPDP | 1 -> state id
+   full identifier set for that provider within that state
+```
+
+**State-scoping is live here:** the same hospital enrolled in both Arkansas (05)
+and Louisiana (22) Medicaid under different state IDs — always carry
+`SUBMTG_MDCD_LCL_STATE_CD` with `PRVDR_STATE_MDCD_ID`.
+
+### C. Cross-program bridge (the payoff)
+
+Because NPI 1558653212 appears in **both** extracts, the programs resolve to one
+real-world entity:
+
+```
+ Medicare extract  ─(CLM_BLG_PRVDR_NPI_NUM)─┐
+                                            ├─► NPI 1558653212 ─► npi_oscar   ─► OSCAR 040134, TIN, Little Rock HQ
+ Medicaid extract  ─(CLM_BLG_PRVDR_NPI_NUM)─┘                   └─► medicaid_id ─► AR id 234152002 + LA id 769850343001
+```
+
+From two aggregate claim rows — "18 Medicare beneficiaries at a Benton clinic"
+and "2,964 Medicaid recipients billed" — you land on a single identity:
+**Arkansas Heart Hospital LLC**, OSCAR 040134, enrolled in Medicare since 1997 and
+in both AR and LA Medicaid. The NPI is the hinge; the crosswalks turn it into
+names, OSCARs, TINs, addresses, and alternate IDs on each side.
