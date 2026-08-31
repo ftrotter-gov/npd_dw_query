@@ -53,8 +53,13 @@ and emit a `COPY INTO {stage_target} FROM ( ... ) FILE_FORMAT = (...) ...`
 statement. run_export() supplies stage_target = "@~/<file_prefix>.<window>.csv".
 """
 
+import gzip
 import os
+import shlex
+import shutil
+import subprocess
 import sys
+import tempfile
 from calendar import monthrange
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -344,6 +349,123 @@ def remove_stage_file(conn, filename):
     """REMOVE @~/<filename> after the local (and S3, if any) copy is confirmed."""
     with conn.cursor() as cur:
         cur.execute(f"REMOVE @~/{filename}")
+
+
+# ----------------------------------------------------------------------------
+# MULTI-FILE RELAY  (for unloads too big for a 5 GB SINGLE=TRUE file)
+#
+# Snowflake caps a SINGLE=TRUE unload at 5 GB. For larger result sets, unload
+# with SINGLE=FALSE to a stage "directory" prefix (@~/<dir>/); Snowflake writes
+# N part files (each <= MAX_FILE_SIZE, optionally gzipped). We GET them all, then
+# concatenate locally into ONE plain CSV — keeping the header from the first part
+# and dropping the repeated header line from every subsequent part. The result is
+# byte-for-byte the same rows a single-file unload would have produced (the query
+# still applies SELECT DISTINCT / GROUP BY globally; SINGLE=FALSE only changes how
+# the one result set is split across output files).
+# ----------------------------------------------------------------------------
+
+def unload_to_stage_multifile(conn, stage_dir, sql):
+    """Run a multi-file COPY INTO @~/<stage_dir>/. Returns rows_unloaded (0 == empty)."""
+    log(f"  COPY INTO @~/{stage_dir}/  (multi-file)")
+    with conn.cursor() as cur:
+        cur.execute(sql)
+        row = cur.fetchone()
+        cols = [c[0] for c in cur.description] if cur.description else []
+    rec = dict(zip(cols, row)) if row else {}
+    return int(_ci(rec, "rows_unloaded", 0) or 0)
+
+
+def stage_dir_bytes(conn, stage_dir):
+    """Sum the byte size of every part under @~/<stage_dir>/ (0 if empty). Used to
+    measure a staged result BEFORE downloading it, so a caller can pick a delivery
+    that fits local disk instead of blindly GETting a multi-hundred-GB result."""
+    total = 0
+    with conn.cursor() as cur:
+        cur.execute(f"LIST @~/{stage_dir}/")
+        # LIST columns: name, size, md5, last_modified
+        for row in cur.fetchall():
+            try:
+                total += int(row[1])
+            except (TypeError, ValueError, IndexError):
+                pass
+    return total
+
+
+def _merge_parts_gzip(parts, final):
+    """Merge gzipped part files into ONE clean gzip CSV at `final`, keeping the
+    header once and stripping the repeated header from parts 2..N, recompressing
+    with the system `gzip` (streamed, low memory). Each part is deleted right
+    after it is merged so peak disk stays near the compressed part total rather
+    than doubling it. The output is a valid multi-member gzip that decompresses to
+    the concatenated CSV with a single header line."""
+    if final.exists():
+        final.unlink()
+    for i, p in enumerate(parts):
+        decompress = f"gzip -dc {shlex.quote(str(p))}" if p.suffix == ".gz" \
+                     else f"cat {shlex.quote(str(p))}"
+        strip = "cat" if i == 0 else "tail -n +2"   # drop the repeated header row
+        cmd = f"{decompress} | {strip} | gzip -1 >> {shlex.quote(str(final))}"
+        rc = subprocess.run(["/bin/sh", "-c", cmd]).returncode
+        if rc != 0:
+            raise RuntimeError(f"gzip merge failed on {p.name} (rc={rc})")
+        p.unlink()   # free each part immediately
+
+
+def get_and_merge_stage_dir(conn, stage_dir, final_filename, output_dir, compress=False):
+    """
+    GET every part under @~/<stage_dir>/ into a temp dir, then concatenate them
+    into <output_dir>/<final_filename> (header written once, repeated part headers
+    dropped). Handles gzipped parts transparently.
+
+    compress=False -> one plain CSV (default; original behavior).
+    compress=True  -> one gzip-compressed CSV (final_filename should end in .gz);
+                      recompressed with system gzip and each part deleted as it is
+                      merged, so a very large result lands at ~its compressed size
+                      instead of the full plain-CSV size.
+
+    Returns the local Path, or None.
+    """
+    out = Path(output_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    # temp dir lives beside the output so the GET and the final file share a volume
+    tmp = Path(tempfile.mkdtemp(prefix=".idr_parts_", dir=str(out)))
+    try:
+        uri = tmp.resolve().as_uri()
+        log(f"  GET @~/{stage_dir}/ → {tmp}")
+        with conn.cursor() as cur:
+            cur.execute(f"GET @~/{stage_dir}/ '{uri}'")
+
+        parts = sorted(p for p in tmp.iterdir() if p.is_file())
+        if not parts:
+            log("  ✗ GET produced no part files")
+            return None
+        log(f"  merging {len(parts)} part file(s) → {final_filename}"
+            f"{' (gzip output)' if compress else ''}")
+
+        final = out / final_filename
+        if compress:
+            _merge_parts_gzip(parts, final)
+        else:
+            wrote_header = False
+            with open(final, "wb") as fout:
+                for p in parts:
+                    opener = gzip.open if p.suffix == ".gz" else open
+                    with opener(p, "rb") as fin:
+                        header = fin.readline()      # each part repeats the header
+                        if not wrote_header:
+                            fout.write(header)
+                            wrote_header = True
+                        shutil.copyfileobj(fin, fout)  # stream the data rows
+                    p.unlink()                        # free each part immediately
+        return final if final.exists() else None
+    finally:
+        shutil.rmtree(tmp, ignore_errors=True)
+
+
+def remove_stage_dir(conn, stage_dir):
+    """REMOVE @~/<stage_dir>/ (all parts) after the local/S3 copy is confirmed."""
+    with conn.cursor() as cur:
+        cur.execute(f"REMOVE @~/{stage_dir}/")
 
 
 def parse_s3_uri(s3_bucket):

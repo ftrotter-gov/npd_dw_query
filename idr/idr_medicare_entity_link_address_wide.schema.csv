@@ -1,0 +1,18 @@
+position,column_name,role,description,source_table,source_column
+1,CLM_BLG_PRVDR_TAX_NUM,billing_tin,Billing provider TIN (blank/'~'/'000000000' normalized to NULL),V2_MDCR_CLM,CLM_BLG_PRVDR_TAX_NUM
+2,CLM_BLG_PRVDR_OSCAR_NUM,billing_oscar,Billing provider OSCAR/CCN filled in from the current provider dimension via billing NPI (the claim's own OSCAR is blank for the professional-line population); populated only where the biller is an institutional facility else NULL,V2_DIM_PRVDR_CRNT,PRVDR_OSCAR_NUM
+3,CLM_BLG_PRVDR_NPI_NUM,billing_org_npi,Billing / organization NPI,V2_MDCR_CLM,CLM_BLG_PRVDR_NPI_NUM
+4,CLM_ATNDG_PRVDR_NPI_NUM,attending,Attending provider NPI,V2_MDCR_CLM,CLM_ATNDG_PRVDR_NPI_NUM
+5,CLM_OPRTG_PRVDR_NPI_NUM,operating,Operating provider NPI,V2_MDCR_CLM,CLM_OPRTG_PRVDR_NPI_NUM
+6,CLM_OTHR_PRVDR_NPI_NUM,other,Other provider NPI,V2_MDCR_CLM,CLM_OTHR_PRVDR_NPI_NUM
+7,CLM_RFRG_PRVDR_NPI_NUM,referring,Referring provider NPI,V2_MDCR_CLM,CLM_RFRG_PRVDR_NPI_NUM
+8,CLM_RNDRG_PRVDR_NPI_NUM,rendering,Rendering provider NPI,V2_MDCR_CLM,CLM_RNDRG_PRVDR_NPI_NUM
+9,CLM_SRVC_PRVDR_NPI_NUM,service,Service provider NPI,V2_MDCR_CLM,CLM_SRVC_PRVDR_NPI_NUM
+10,CLM_FAC_PRVDR_NPI_NUM,facility,Facility provider NPI,V2_MDCR_CLM,CLM_FAC_PRVDR_NPI_NUM
+11,CLM_POS_PRVDR_1ST_LINE_ADR,pos_address_line_1,Place-of-service street address line 1,V2_MDCR_CLM_LINE_PRFNL,CLM_POS_PRVDR_1ST_LINE_ADR
+12,CLM_POS_PRVDR_2ND_LINE_ADR,pos_address_line_2,Place-of-service street address line 2,V2_MDCR_CLM_LINE_PRFNL,CLM_POS_PRVDR_2ND_LINE_ADR
+13,CLM_POS_PRVDR_CITY_NAME,pos_city,Place-of-service city,V2_MDCR_CLM_LINE_PRFNL,CLM_POS_PRVDR_CITY_NAME
+14,CLM_POS_PRVDR_USPS_STATE_CD,pos_state,Place-of-service USPS state code,V2_MDCR_CLM_LINE_PRFNL,CLM_POS_PRVDR_USPS_STATE_CD
+15,CLM_POS_PRVDR_ZIP5_CD,pos_zip5,Place-of-service 5-digit ZIP,V2_MDCR_CLM_LINE_PRFNL,CLM_POS_PRVDR_ZIP5_CD
+16,CLM_POS_PRVDR_ZIP4_CD,pos_zip4,Place-of-service ZIP+4 add-on,V2_MDCR_CLM_LINE_PRFNL,CLM_POS_PRVDR_ZIP4_CD
+17,CNT_BENE,count,Distinct beneficiaries (COUNT DISTINCT MBI) sharing this signature+address; small-cell suppressed (only cells with 11+ distinct beneficiaries kept); aggregate only - no MBI emitted,derived,COUNT(DISTINCT CLM_BENE_MBI_ID)

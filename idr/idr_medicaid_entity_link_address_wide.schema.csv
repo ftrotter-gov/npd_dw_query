@@ -1,0 +1,11 @@
+position,column_name,role,description,source_table,source_column
+1,CLM_ADMTG_PRVDR_NPI_NUM,admitting,Admitting provider NPI,V2_MDCD_CLM,CLM_ADMTG_PRVDR_NPI_NUM
+2,CLM_BLG_PRVDR_NPI_NUM,billing,Billing provider NPI,V2_MDCD_CLM,CLM_BLG_PRVDR_NPI_NUM
+3,CLM_SPRVSNG_PRVDR_NPI_NUM,supervising,Supervising provider NPI,V2_MDCD_CLM,CLM_SPRVSNG_PRVDR_NPI_NUM
+4,CLM_SRVC_LCTN_ORG_NPI_NUM,service_location_org,Service-location organization NPI,V2_MDCD_CLM,CLM_SRVC_LCTN_ORG_NPI_NUM
+5,CLM_SRVC_LCTN_LINE_1_ADR,svc_location_address_line_1,Service-location street address line 1,V2_MDCD_CLM,CLM_SRVC_LCTN_LINE_1_ADR
+6,CLM_SRVC_LCTN_LINE_2_ADR,svc_location_address_line_2,Service-location street address line 2,V2_MDCD_CLM,CLM_SRVC_LCTN_LINE_2_ADR
+7,CLM_SRVC_LCTN_CITY_NAME,svc_location_city,Service-location city,V2_MDCD_CLM,CLM_SRVC_LCTN_CITY_NAME
+8,CLM_SRVC_LCTN_STATE_CD,svc_location_state,Service-location state code,V2_MDCD_CLM,CLM_SRVC_LCTN_STATE_CD
+9,CLM_SRVC_LCTN_ZIP_CD,svc_location_zip,Service-location ZIP,V2_MDCD_CLM,CLM_SRVC_LCTN_ZIP_CD
+10,CNT_RECIPIENTS,count,Distinct recipients (COUNT DISTINCT recipient State Medicaid ID) sharing this signature+address; small-cell suppressed (only cells with 11+ distinct recipients kept); aggregate only - no recipient id emitted,derived,COUNT(DISTINCT CLM_RCPNT_STATE_MDCD_ID)
