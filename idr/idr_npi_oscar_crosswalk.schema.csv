@@ -1,0 +1,19 @@
+position,column_name,role,description,source_table,source_column,fill_pct,note
+1,PRVDR_NPI_NUM,provider_npi,Provider NPI resolved by joining the source PRVDR_SK to the current provider dimension ('' / '~' normalized to NULL) - the real join key,V2_DIM_PRVDR_CRNT,PRVDR_NPI_NUM,100.0,joined - 1 of 3459510 rows does not resolve; PRVDR_SK itself is not emitted
+2,PRVDR_OSCAR_NUM,oscar_ccn,Provider OSCAR / CCN institutional identifier,V2_MDCR_PRVDR_NPI_OSCAR,PRVDR_OSCAR_NUM,100.0,
+3,PRVDR_NPI_OSCAR_BGN_DT,association_begin_date,NPI<->OSCAR association begin date,V2_MDCR_PRVDR_NPI_OSCAR,PRVDR_NPI_OSCAR_BGN_DT,100.0,
+4,PRVDR_NPI_OSCAR_END_DT,association_end_date,NPI<->OSCAR association end date,V2_MDCR_PRVDR_NPI_OSCAR,PRVDR_NPI_OSCAR_END_DT,100.0,
+5,CLM_CNTRCTR_NUM,contractor_number,Medicare contractor number,V2_MDCR_PRVDR_NPI_OSCAR,CLM_CNTRCTR_NUM,100.0,
+6,PRVDR_NPI_OSCAR_MDCR_BGN_DT,medicare_begin_date,Medicare enrollment begin date for the association,V2_MDCR_PRVDR_NPI_OSCAR,PRVDR_NPI_OSCAR_MDCR_BGN_DT,100.0,
+7,PRVDR_NPI_OSCAR_MDCR_END_DT,medicare_end_date,Medicare enrollment end date for the association,V2_MDCR_PRVDR_NPI_OSCAR,PRVDR_NPI_OSCAR_MDCR_END_DT,100.0,
+8,PRVDR_NPI_OSCAR_NAME,provider_name,Provider name on the OSCAR record,V2_MDCR_PRVDR_NPI_OSCAR,PRVDR_NPI_OSCAR_NAME,100.0,
+9,PRVDR_NPI_OSCAR_FED_TAX_NUM,federal_tax_number,Provider federal tax number (TIN/EIN),V2_MDCR_PRVDR_NPI_OSCAR,PRVDR_NPI_OSCAR_FED_TAX_NUM,100.0,
+10,PRVDR_NPI_OSCAR_LINE_1_ADR,address_line_1,Provider street address line 1,V2_MDCR_PRVDR_NPI_OSCAR,PRVDR_NPI_OSCAR_LINE_1_ADR,94.9,
+11,PRVDR_NPI_OSCAR_LINE_2_ADR,address_line_2,Provider street address line 2,V2_MDCR_PRVDR_NPI_OSCAR,PRVDR_NPI_OSCAR_LINE_2_ADR,28.9,sparse
+12,PRVDR_NPI_OSCAR_INVLD_PLC_NAME,invalid_place_name,Legacy/invalid place (city) name,V2_MDCR_PRVDR_NPI_OSCAR,PRVDR_NPI_OSCAR_INVLD_PLC_NAME,89.7,legacy - real city/state come from resolving GEO_SK (not emitted)
+13,PRVDR_NPI_OSCAR_INVLD_ZIP_CD,invalid_zip,Legacy/invalid ZIP,V2_MDCR_PRVDR_NPI_OSCAR,PRVDR_NPI_OSCAR_INVLD_ZIP_CD,89.7,legacy - prefer GEO_ZIP4_CD
+14,PRVDR_NPI_OSCAR_INVLD_STATE_CD,invalid_state,Legacy/invalid state code,V2_MDCR_PRVDR_NPI_OSCAR,PRVDR_NPI_OSCAR_INVLD_STATE_CD,89.7,legacy - real city/state come from resolving GEO_SK (not emitted)
+15,GEO_ZIP4_CD,geo_zip4,Geographic ZIP+4 (the real ZIP),V2_MDCR_PRVDR_NPI_OSCAR,GEO_ZIP4_CD,82.2,
+16,PRVDR_NPI_OSCAR_PHNE_NUM,phone,Provider phone number,V2_MDCR_PRVDR_NPI_OSCAR,PRVDR_NPI_OSCAR_PHNE_NUM,100.0,
+17,PRVDR_NPI_OSCAR_TYPE_CD,type_code,Provider/association type code,V2_MDCR_PRVDR_NPI_OSCAR,PRVDR_NPI_OSCAR_TYPE_CD,32.7,sparse
+18,PRVDR_LGCY_ADR_TYPE_CD,legacy_address_type,Legacy address type code,V2_MDCR_PRVDR_NPI_OSCAR,PRVDR_LGCY_ADR_TYPE_CD,94.8,

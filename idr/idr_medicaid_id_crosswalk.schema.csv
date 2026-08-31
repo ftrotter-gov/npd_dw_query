@@ -1,0 +1,26 @@
+position,column_name,role,description,source_table,source_column
+1,PRVDR_STATE_MDCD_ID,state_medicaid_id,State-assigned Medicaid provider ID (provider key),V2_MDCD_PRVDR_ID_CRNT,PRVDR_STATE_MDCD_ID
+2,SUBMTG_MDCD_LCL_STATE_CD,submitting_state,Submitting state code (part of the provider key),V2_MDCD_PRVDR_ID_CRNT,SUBMTG_MDCD_LCL_STATE_CD
+3,PRVDR_LCTN_ID,location_id,Provider location id (part of the key; ties to the folded address),V2_MDCD_PRVDR_ID_CRNT,PRVDR_LCTN_ID
+4,PRVDR_MDCD_ID_TYPE_CD,id_type_code,Id-type code (1 state id / 2 NPI / 3 Medicare id / 4 NCPDP / 5 fed tax / 6 state tax / 8 other / 9 old state id; SSN=7 excluded),V2_MDCD_PRVDR_ID_CRNT,PRVDR_MDCD_ID_TYPE_CD
+5,PRVDR_MDCD_ID_TYPE_DESC,id_type_desc,Decoded id-type description,V2_MDCD_PRVDR_ID_TYPE_CD,PRVDR_MDCD_ID_TYPE_CD_DESC
+6,PRVDR_ID,id_value,The identifier value for this id-type ('' / '~' normalized to NULL),V2_MDCD_PRVDR_ID_CRNT,PRVDR_ID
+7,PRVDR_ID_ISSG_ENT_ID,issuing_entity,Entity that issued the identifier,V2_MDCD_PRVDR_ID_CRNT,PRVDR_ID_ISSG_ENT_ID
+8,PRVDR_SRC_EFCTV_DT,source_effective_date,Source effective date of this id association,V2_MDCD_PRVDR_ID_CRNT,PRVDR_SRC_EFCTV_DT
+9,PRVDR_SRC_END_DT,source_end_date,Source end date of this id association,V2_MDCD_PRVDR_ID_CRNT,PRVDR_SRC_END_DT
+10,PRVDR_LAST_NAME,last_name,Provider last name (folded in 1:1 on state+Medicaid ID),V2_MDCD_PRVDR_DMGRPHC_CRNT,PRVDR_LAST_NAME
+11,PRVDR_1ST_NAME,first_name,Provider first name,V2_MDCD_PRVDR_DMGRPHC_CRNT,PRVDR_1ST_NAME
+12,PRVDR_MDL_INITL_NAME,middle_initial,Provider middle initial/name,V2_MDCD_PRVDR_DMGRPHC_CRNT,PRVDR_MDL_INITL_NAME
+13,PRVDR_ORG_NAME,org_name,Provider organization name,V2_MDCD_PRVDR_DMGRPHC_CRNT,PRVDR_ORG_NAME
+14,PRVDR_LGL_NAME,legal_name,Provider legal name,V2_MDCD_PRVDR_DMGRPHC_CRNT,PRVDR_LGL_NAME
+15,PRVDR_DBA_NAME,dba_name,Provider doing-business-as name,V2_MDCD_PRVDR_DMGRPHC_CRNT,PRVDR_DBA_NAME
+16,PRVDR_FAC_GRP_INDVDL_CD,facility_group_individual,Facility / group / individual classification code,V2_MDCD_PRVDR_DMGRPHC_CRNT,PRVDR_FAC_GRP_INDVDL_CD
+17,PRVDR_MDCD_ADR_TYPE_CD,address_type,Address type of the folded address (1 billing / 2 mailing / 3 practice / 4 service-location; picked by priority 4>3>1>2),V2_MDCD_PRVDR_LCTN_CRNT,PRVDR_MDCD_ADR_TYPE_CD
+18,PRVDR_LINE_1_ADR,address_line_1,Provider street address line 1,V2_MDCD_PRVDR_LCTN_CRNT,PRVDR_LINE_1_ADR
+19,PRVDR_LINE_2_ADR,address_line_2,Provider street address line 2,V2_MDCD_PRVDR_LCTN_CRNT,PRVDR_LINE_2_ADR
+20,PRVDR_LINE_3_ADR,address_line_3,Provider street address line 3,V2_MDCD_PRVDR_LCTN_CRNT,PRVDR_LINE_3_ADR
+21,PRVDR_ADR_CITY_NAME,city,Provider city,V2_MDCD_PRVDR_LCTN_CRNT,PRVDR_ADR_CITY_NAME
+22,PRVDR_ADR_STATE_CD,state,Provider state code,V2_MDCD_PRVDR_LCTN_CRNT,PRVDR_ADR_STATE_CD
+23,PRVDR_ADR_ZIP_CD,zip,Provider ZIP,V2_MDCD_PRVDR_LCTN_CRNT,PRVDR_ADR_ZIP_CD
+24,PRVDR_ADR_CNTY_CD,county,Provider county code,V2_MDCD_PRVDR_LCTN_CRNT,PRVDR_ADR_CNTY_CD
+25,PRVDR_PHNE_NUM,phone,Provider phone number,V2_MDCD_PRVDR_LCTN_CRNT,PRVDR_PHNE_NUM
