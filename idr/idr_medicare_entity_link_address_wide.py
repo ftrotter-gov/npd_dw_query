@@ -16,7 +16,7 @@ the signature width). Locations and links stay together in one dataset.
   Output grain: one row per distinct combination of
     (billing TIN, OSCAR, 8 provider-role NPI columns [billing + attending,
      operating, other, referring, rendering, service, facility], place-of-service
-     address)
+     address, place-of-service TYPE code [CLM_POS_CD + decoded description])
   with COUNT(DISTINCT beneficiary MBI) across the window. Restricted to the
   professional-line population (INNER join), the only claims that carry a POS
   address. Small-cell suppression IS applied -- signature+address cells seen by
@@ -117,6 +117,14 @@ ADDR_COLS = [
     "CLM_POS_PRVDR_ZIP4_CD",
 ]
 
+# Place-of-service TYPE code. The 2-digit POS code (11 office, 12 home, 21
+# inpatient hospital, 31 SNF, ...) is NOT on the professional-line view -- it
+# lives on the base claim line V2_MDCR_CLM_LINE, which shares the full line key
+# (GEO_BENE_SK + CLM_DT_SGNTR_SK + CLM_NUM_SK + CLM_LINE_NUM) with the
+# professional line, so it stays aligned to the SAME line as the address. The
+# decoded description is attached afterward from the V2_MDCR_CLM_POS_CD dimension.
+POS_COL = "CLM_POS_CD"
+
 
 def _norm(qualified, alias):
     """Normalize an NPI/OSCAR column: TRIM, and map '' and '~' to NULL so blank
@@ -136,10 +144,14 @@ def build_medicare_wide_sql(stage_target, start_sql, end_sql, min_bene):
     from one window of final-action Medicare professional claims. Signature+
     address cells with <= min_bene distinct beneficiaries are suppressed.
 
-      base   -- CLM INNER JOIN CLM_LINE_PRFNL (on GEO_BENE_SK + CLM_DT_SGNTR_SK),
-                each claim carrying the billing TIN, the 8 role NPI columns
-                (each normalized to NULL when blank), the MBI, and the six POS
-                address columns. Window filter is CLM_FROM_DT with
+      base   -- CLM INNER JOIN CLM_LINE_PRFNL on the CLAIM-UNIQUE line key
+                (GEO_BENE_SK + CLM_DT_SGNTR_SK + CLM_NUM_SK) -- NOT the 2-key
+                (GEO_BENE_SK + CLM_DT_SGNTR_SK), which is not claim-unique and
+                bled a bene's other claims' addresses onto every claim -- then
+                LEFT JOIN CLM_LINE on the full line key (+ CLM_LINE_NUM) for the
+                POS type code. Each claim carries the billing TIN, the 8 role NPI
+                columns (each normalized to NULL when blank), the MBI, the six POS
+                address columns, and the POS type code. Window filter is CLM_FROM_DT with
                 CLM_FINL_ACTN_IND='Y'. The join is INNER so only the
                 professional-line population -- the claims that actually carry a
                 POS address -- is scanned; institutional claims (no professional
@@ -180,21 +192,26 @@ def build_medicare_wide_sql(stage_target, start_sql, end_sql, min_bene):
         + org_norm
         + role_norm
         + [f"CLINE.{c} AS {c}" for c in ADDR_COLS]
+        + [f"POSL.{POS_COL} AS {POS_COL}"]
     )
 
-    # Aggregation grain: TIN + all NPI columns + address (OSCAR is NOT grouped --
-    # it is attached afterward from the dimension, and is functionally determined
-    # by the billing NPI, so it adds no rows).
-    agg_cols   = ["CLM_BLG_PRVDR_TAX_NUM"] + npi_aliases + ADDR_COLS
+    # Aggregation grain: TIN + all NPI columns + address + POS code (OSCAR and the
+    # decoded POS description are NOT grouped -- both are attached afterward from
+    # dimensions and are functionally determined by the billing NPI / POS code, so
+    # they add no rows).
+    agg_cols   = ["CLM_BLG_PRVDR_TAX_NUM"] + npi_aliases + ADDR_COLS + [POS_COL]
     agg_list   = ",\n        ".join(agg_cols)
 
     # Final projection: keep original column order, with OSCAR back in position 2
-    # sourced from the dimension (normalized '' / '~' -> NULL).
+    # sourced from the dimension (normalized '' / '~' -> NULL), and the POS code +
+    # its decoded description just before the count.
     final_cols = (
         ["agg.CLM_BLG_PRVDR_TAX_NUM",
          "NULLIF(NULLIF(TRIM(DIM.PRVDR_OSCAR_NUM), ''), '~') AS CLM_BLG_PRVDR_OSCAR_NUM"]
         + [f"agg.{c}" for c in npi_aliases]
         + [f"agg.{c}" for c in ADDR_COLS]
+        + [f"agg.{POS_COL}",
+           "NULLIF(TRIM(POS.CLM_POS_CD_DESC), '') AS CLM_POS_CD_DESC"]
         + ["agg.CNT_BENE"]
     )
     final_list = ",\n    ".join(final_cols)
@@ -210,6 +227,21 @@ WITH base AS (
     INNER JOIN IDRC_PRD.CMS_VDM_VIEW_MDCR_PRD.V2_MDCR_CLM_LINE_PRFNL AS CLINE
         ON CLINE.GEO_BENE_SK     = CLAIM.GEO_BENE_SK
        AND CLINE.CLM_DT_SGNTR_SK = CLAIM.CLM_DT_SGNTR_SK
+       AND CLINE.CLM_NUM_SK      = CLAIM.CLM_NUM_SK
+       -- CLM_NUM_SK is REQUIRED for claim identity: (GEO_BENE_SK, CLM_DT_SGNTR_SK)
+       -- alone is NOT claim-unique -- a beneficiary's same-signature claims share
+       -- it, so joining on 2 keys fanned every claim's providers onto the POS
+       -- lines of the bene's OTHER claims (address bleed across claims). Adding
+       -- CLM_NUM_SK makes the header join to exactly its own lines.
+    LEFT JOIN IDRC_PRD.CMS_VDM_VIEW_MDCR_PRD.V2_MDCR_CLM_LINE AS POSL
+        ON POSL.GEO_BENE_SK      = CLINE.GEO_BENE_SK
+       AND POSL.CLM_DT_SGNTR_SK  = CLINE.CLM_DT_SGNTR_SK
+       AND POSL.CLM_NUM_SK       = CLINE.CLM_NUM_SK
+       AND POSL.CLM_LINE_NUM     = CLINE.CLM_LINE_NUM
+       -- POS type code lives on the base claim line, keyed 1:1 with the
+       -- professional line on the full line key, so it stays on the SAME line as
+       -- the address above. LEFT so a professional line with no base-line match
+       -- keeps the row (POS just NULL).
     WHERE CLAIM.CLM_FROM_DT       >= DATE '{start_sql}'
       AND CLAIM.CLM_FROM_DT        < DATE '{end_sql}'
       AND CLAIM.CLM_FINL_ACTN_IND  = 'Y'
@@ -236,6 +268,12 @@ SELECT
 FROM agg
 LEFT JOIN IDRC_PRD.CMS_VDM_VIEW_SMNTC_PRD.V2_DIM_PRVDR_CRNT AS DIM
     ON TRIM(DIM.PRVDR_NPI_NUM) = agg.CLM_BLG_PRVDR_NPI_NUM
+LEFT JOIN (
+    SELECT CLM_POS_CD, MAX(CLM_POS_CD_DESC) AS CLM_POS_CD_DESC
+    FROM IDRC_PRD.CMS_VDM_VIEW_MDCR_PRD.V2_MDCR_CLM_POS_CD
+    GROUP BY CLM_POS_CD
+) AS POS
+    ON POS.CLM_POS_CD = agg.CLM_POS_CD
 
 )
 FILE_FORMAT = (

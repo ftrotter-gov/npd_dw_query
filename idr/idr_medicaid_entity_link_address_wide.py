@@ -12,7 +12,8 @@ Locations and links stay together in one dataset.
 
   Output grain: one row per distinct combination of
     (admitting NPI, billing NPI, supervising NPI, service-location-org NPI,
-     service-location address)
+     service-location address, place-of-service TYPE code [CLM_POS_CD + decoded
+     description])
   with COUNT(DISTINCT recipient State Medicaid ID) across the window. Small-cell
   suppression IS applied -- signature+address cells seen by MIN_CELL_BENE or fewer
   distinct recipients are dropped (the CMS "11 or more" rule at the default
@@ -25,7 +26,10 @@ them to ROLE_NPI_COLS below -- the SELECT and GROUP BY are generated from it.
 CONFIGURABLE DATE SPAN
   Edit CLAIM_WINDOW_MONTHS below. The window ends CLAIM_WINDOW_LAG_MONTHS (2)
   months before today and stretches back this many months. Medicaid claims are
-  filtered on CLM_THRU_DT (matching idr_medicaid_address.py).
+  filtered on CLM_THRU_DT (matching idr_medicaid_address.py) AND to final-action
+  only (CLM_FINL_ACTN_IND='T' -- note 'T'/'F', not Medicare's 'Y'/'N'), so
+  superseded original/adjustment/void versions of a claim do not double-count
+  recipients or carry since-corrected provider/address combinations.
 
 Local (laptop) run -- picks up ~/.config/idr2/snowflake_pat automatically:
     SNOWFLAKE_ACCOUNT=<account> SNOWFLAKE_USER=<user> \
@@ -87,6 +91,11 @@ ADDR_COLS = [
     "CLM_SRVC_LCTN_ZIP_CD",
 ]
 
+# Place-of-service TYPE code. Unlike Medicare, the Medicaid POS code is ON the
+# claim table itself (V2_MDCD_CLM.CLM_POS_CD) -- no line join needed. The decoded
+# description is attached afterward from the V2_MDCD_CLM_POS_CD dimension.
+POS_COL = "CLM_POS_CD"
+
 
 def _norm(col):
     """TRIM and map '' / '~' to NULL, keeping the column (a missing role is NULL,
@@ -125,12 +134,25 @@ def build_medicaid_wide_sql(stage_target, start_sql, end_sql, min_bene):
     base_select = ",\n        ".join(
         role_norm
         + [f"{c} AS {c}" for c in ADDR_COLS]
+        + [f"NULLIF(NULLIF(TRIM({POS_COL}), ''), '~') AS {POS_COL}"]
         + ["CLM_RCPNT_STATE_MDCD_ID"]
     )
 
-    group_cols  = ROLE_NPI_COLS + ADDR_COLS
-    group_list  = ",\n    ".join(group_cols)
-    select_list = ",\n    ".join(group_cols)
+    # Grain: all role NPIs + address + POS code. The decoded POS description is
+    # NOT grouped -- it is attached afterward from the dimension and is
+    # functionally determined by the code, so it adds no rows.
+    group_cols  = ROLE_NPI_COLS + ADDR_COLS + [POS_COL]
+    group_list  = ",\n        ".join(group_cols)
+
+    # Final projection: grain cols, then POS code + decoded description, then count.
+    final_cols = (
+        [f"agg.{c}" for c in ROLE_NPI_COLS]
+        + [f"agg.{c}" for c in ADDR_COLS]
+        + [f"agg.{POS_COL}",
+           "NULLIF(TRIM(POS.CLM_POS_CD_DESC), '') AS CLM_POS_CD_DESC"]
+        + ["agg.CNT_RECIPIENTS"]
+    )
+    final_list = ",\n    ".join(final_cols)
 
     return f"""
 COPY INTO {stage_target}
@@ -143,17 +165,37 @@ WITH base AS (
     WHERE CLM_THRU_DT >= DATE '{start_sql}'
       AND CLM_THRU_DT <  DATE '{end_sql}'
       AND CLM_RCPNT_STATE_MDCD_ID IS NOT NULL
+      AND CLM_FINL_ACTN_IND = 'T'
+      -- FINAL-ACTION ONLY. V2_MDCD_CLM carries original + adjustment + voided
+      -- claim versions, each with its own CLM_UNIQ_ID (~8.5% of rows are
+      -- non-final). Without this filter, superseded versions double-count
+      -- recipients and attach them to since-corrected provider/address combos --
+      -- the Medicaid analog of the Medicare claim-grain bug. NOTE the domain is
+      -- 'T'/'F' here, NOT 'Y'/'N' as on Medicare's V2_MDCR_CLM -- filtering ='Y'
+      -- would silently return zero rows.
       -- NOTE: the service-location address is NOT required. It is optional
       -- enrichment -- rows are kept even when the address columns are blank/NULL.
+),
+
+agg AS (
+    SELECT
+        {group_list},
+        COUNT(DISTINCT CLM_RCPNT_STATE_MDCD_ID) AS CNT_RECIPIENTS
+    FROM base
+    GROUP BY
+        {group_list}
+    HAVING COUNT(DISTINCT CLM_RCPNT_STATE_MDCD_ID) > {min_bene}
 )
 
 SELECT
-    {select_list},
-    COUNT(DISTINCT CLM_RCPNT_STATE_MDCD_ID) AS CNT_RECIPIENTS
-FROM base
-GROUP BY
-    {group_list}
-HAVING COUNT(DISTINCT CLM_RCPNT_STATE_MDCD_ID) > {min_bene}
+    {final_list}
+FROM agg
+LEFT JOIN (
+    SELECT CLM_POS_CD, MAX(CLM_POS_CD_DESC) AS CLM_POS_CD_DESC
+    FROM IDRC_PRD.CMS_VDM_VIEW_MDCD_PRD.V2_MDCD_CLM_POS_CD
+    GROUP BY CLM_POS_CD
+) AS POS
+    ON POS.CLM_POS_CD = agg.CLM_POS_CD
 
 )
 FILE_FORMAT = (
