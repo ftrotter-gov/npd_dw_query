@@ -47,6 +47,13 @@ def build_address_sql(stage_target, start_sql, end_sql, min_bene):
     at > min_bene. One uncompressed, headered CSV (SINGLE=TRUE).
 
     BUG FIXES vs. the Snowsight source:
+      * FINAL-ACTION: no final-action filter was applied, so original +
+        adjustment + voided versions of a claim (each its own CLM_UNIQ_ID; ~8.5%
+        non-final) all counted -- double-counting recipients and attaching them to
+        since-corrected provider/address combos. Added CLM_FINL_ACTN_IND = 'T'.
+        NOTE the domain is 'T'/'F', NOT Medicare's 'Y'/'N' -- filtering ='Y'
+        silently returns zero rows. Same fix as
+        idr_medicaid_entity_link_address_wide.py.
       * window: the source hardcoded YEAR(CLM_THRU_DT) = 2026, ignoring the
         computed rolling window; this filters CLM_THRU_DT to [start, end).
       * output name: caller writes @~/idr_medicaid_address.* (the source reused
@@ -68,7 +75,8 @@ WITH claim_npis AS (
         CLM_SRVC_LCTN_CITY_NAME,
         CLM_SRVC_LCTN_STATE_CD,
         CLM_SRVC_LCTN_ZIP_CD,
-        CLM_RCPNT_STATE_MDCD_ID
+        CLM_RCPNT_STATE_MDCD_ID,
+        CLM_FINL_ACTN_IND
     FROM IDRC_PRD.CMS_VDM_VIEW_MDCD_PRD.V2_MDCD_CLM
 
     UNION ALL
@@ -81,7 +89,8 @@ WITH claim_npis AS (
         CLM_SRVC_LCTN_CITY_NAME,
         CLM_SRVC_LCTN_STATE_CD,
         CLM_SRVC_LCTN_ZIP_CD,
-        CLM_RCPNT_STATE_MDCD_ID
+        CLM_RCPNT_STATE_MDCD_ID,
+        CLM_FINL_ACTN_IND
     FROM IDRC_PRD.CMS_VDM_VIEW_MDCD_PRD.V2_MDCD_CLM
 
     UNION ALL
@@ -94,7 +103,8 @@ WITH claim_npis AS (
         CLM_SRVC_LCTN_CITY_NAME,
         CLM_SRVC_LCTN_STATE_CD,
         CLM_SRVC_LCTN_ZIP_CD,
-        CLM_RCPNT_STATE_MDCD_ID
+        CLM_RCPNT_STATE_MDCD_ID,
+        CLM_FINL_ACTN_IND
     FROM IDRC_PRD.CMS_VDM_VIEW_MDCD_PRD.V2_MDCD_CLM
 
     UNION ALL
@@ -107,7 +117,8 @@ WITH claim_npis AS (
         CLM_SRVC_LCTN_CITY_NAME,
         CLM_SRVC_LCTN_STATE_CD,
         CLM_SRVC_LCTN_ZIP_CD,
-        CLM_RCPNT_STATE_MDCD_ID
+        CLM_RCPNT_STATE_MDCD_ID,
+        CLM_FINL_ACTN_IND
     FROM IDRC_PRD.CMS_VDM_VIEW_MDCD_PRD.V2_MDCD_CLM
 )
 
@@ -123,6 +134,7 @@ SELECT
 FROM claim_npis
 WHERE NPI IS NOT NULL
   AND CLM_RCPNT_STATE_MDCD_ID IS NOT NULL
+  AND CLM_FINL_ACTN_IND = 'T'
   AND NULLIF(TRIM(CLM_SRVC_LCTN_LINE_1_ADR), '') IS NOT NULL
   AND NULLIF(TRIM(CLM_SRVC_LCTN_CITY_NAME), '') IS NOT NULL
   AND NULLIF(TRIM(CLM_SRVC_LCTN_STATE_CD), '') IS NOT NULL
