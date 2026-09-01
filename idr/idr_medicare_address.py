@@ -49,6 +49,12 @@ def build_address_sql(stage_target, start_sql, end_sql, min_bene):
     suppressed at > min_bene. One uncompressed, headered CSV (SINGLE=TRUE).
 
     BUG FIXES vs. the source:
+      * CLAIM-GRAIN: the header<->line join used only (GEO_BENE_SK,
+        CLM_DT_SGNTR_SK), which is NOT claim-unique -- a beneficiary's
+        same-signature claims share it, so each claim's NPIs fanned onto the POS
+        addresses of the bene's OTHER claims (spurious NPI<->address rows). Added
+        CLM_NUM_SK to the join key to confine each claim to its own lines. Same
+        fix as idr_medicare_entity_link_address_wide.py.
       * CLM_THRU_DT was referenced by the outer SELECT/WHERE but never projected
         through joined_claims / claim_npis, so the query would not compile; it is
         now carried through the CTEs and used only in the WHERE window filter.
@@ -94,6 +100,7 @@ WITH joined_claims AS (
     JOIN IDRC_PRD.CMS_VDM_VIEW_MDCR_PRD.V2_MDCR_CLM AS CLAIM
         ON CLINE.GEO_BENE_SK = CLAIM.GEO_BENE_SK
        AND CLINE.CLM_DT_SGNTR_SK = CLAIM.CLM_DT_SGNTR_SK
+       AND CLINE.CLM_NUM_SK = CLAIM.CLM_NUM_SK
 ),
 
 claim_npis AS (
