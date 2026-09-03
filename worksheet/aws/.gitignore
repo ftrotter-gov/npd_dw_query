@@ -1,0 +1,6 @@
+deploy.env
+deploy.env.prod
+rendered/
+__pycache__/
+*.pyc
+.env

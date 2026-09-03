@@ -1,0 +1,41 @@
+{
+  "family": "idr-worksheet",
+  "requiresCompatibilities": ["FARGATE"],
+  "networkMode": "awsvpc",
+  "cpu": "512",
+  "memory": "1024",
+  "runtimePlatform": {
+    "cpuArchitecture": "X86_64",
+    "operatingSystemFamily": "LINUX"
+  },
+  "executionRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/idr-worksheet-execution-role",
+  "taskRoleArn": "arn:aws:iam::${AWS_ACCOUNT_ID}:role/idr-worksheet-task-role",
+  "containerDefinitions": [
+    {
+      "name": "worksheet",
+      "image": "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/idr-worksheet:latest",
+      "essential": true,
+      "portMappings": [
+        { "containerPort": 8080, "protocol": "tcp" }
+      ],
+      "environment": [
+        { "name": "SNOWFLAKE_ACCOUNT", "value": "${SNOWFLAKE_ACCOUNT}" },
+        { "name": "SNOWFLAKE_USER", "value": "${SNOWFLAKE_USER}" },
+        { "name": "SNOWFLAKE_ROLE", "value": "${SNOWFLAKE_ROLE}" },
+        { "name": "SNOWFLAKE_WAREHOUSE", "value": "${SNOWFLAKE_WAREHOUSE}" },
+        { "name": "S3_BUCKET", "value": "${S3_BUCKET}" },
+        { "name": "OUTPUT_DIR", "value": "/tmp/idr_worksheet" },
+        { "name": "IDLE_SHUTDOWN_MINUTES", "value": "${IDLE_SHUTDOWN_MINUTES}" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/idr-worksheet",
+          "awslogs-region": "${AWS_REGION}",
+          "awslogs-stream-prefix": "worksheet",
+          "awslogs-create-group": "true"
+        }
+      }
+    }
+  ]
+}
