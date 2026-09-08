@@ -8,10 +8,42 @@ Datasets:
 
 | File (prefix) | Grain | Patient count col | Small-cell suppressed |
 |---|---|---|---|
-| `idr_medicare_entity_link_address_wide` | 1 row per (billing TIN, billing NPI, 7 role NPIs, POS address) | `CNT_BENE` (distinct MBI) | yes — 11+ only |
-| `idr_medicaid_entity_link_address_wide` | 1 row per (4 role NPIs, service-location address) | `CNT_RECIPIENTS` (distinct recipient) | yes — 11+ only |
-| `idr_npi_oscar_crosswalk` | association: NPI ↔ OSCAR/CCN (+ dates) | — | n/a (reference) |
+| `idr_medicare_combined_wide` | 1 row per (billing TIN, OSCAR/CCN identity, billing NPI + 10 role NPIs, header geography, specialty/taxonomy/type, type-of-bill, plan/contract, POS street-address block, line specialty/locality, claim type) | `CNT_BENE` (distinct MBI) | yes — 11+ only |
+| `idr_medicaid_combined_wide` | 1 row per (10 role NPIs, service-location address, billing address, specialty/taxonomy/type, type-of-bill + `CLM_POS_CD`, plan/submitter) | `CNT_RECIPIENTS` (distinct recipient) | yes — 11+ only |
+| `idr_npi_oscar_crosswalk` | association: NPI ↔ OSCAR/CCN (+ dates, + provider-dimension enrichment) | — | n/a (reference) |
 | `idr_medicaid_id_crosswalk` | long: 1 row per (provider, ID-type, location) | — | n/a (reference) |
+
+**Place of service.** Only the **Medicaid** combined extract carries a
+place-of-service *code* (`CLM_POS_CD`) — it lives on `V2_MDCD_CLM` — e.g.
+`11`=office, `12`=home, `21`=inpatient hospital, `31`=SNF. There is **no
+`CLM_POS_CD` on the Medicare views** (`V2_MDCR_CLM` / `V2_MDCR_CLM_LINE_PRFNL`);
+the Medicare "place of service" is instead the professional-line **street-address
+block** (`CLM_POS_PRVDR_1ST_LINE_ADR` … `_ZIP4_CD`) plus the line locality /
+specialty (`CLM_PRCNG_LCLTY_CD`, `CLM_PRVDR_SPCLTY_CD`). No decoded
+`CLM_POS_CD_DESC` is emitted on either side — the raw code is shipped; decode
+against the IDR reference table downstream if a label is needed.
+
+> **Claim-grain note (Medicare):** the header↔line join in
+> `idr_medicare_combined_wide` uses the claim-unique key
+> `(GEO_BENE_SK, CLM_DT_SGNTR_SK, CLM_NUM_SK)` and is a **LEFT** join, so all
+> claim types (Part A/B/C/D) are kept and the professional POS block attaches
+> where a line exists (NULL otherwise). The 2-key form
+> `(GEO_BENE_SK, CLM_DT_SGNTR_SK)` is **not** claim-unique — a beneficiary's
+> same-signature claims share it, which fanned each claim's providers onto the POS
+> addresses of the bene's *other* claims (spurious provider↔address rows). Adding
+> `CLM_NUM_SK` confines each claim to its own lines. The billing OSCAR number is
+> filled post-aggregation from `V2_DIM_PRVDR_CRNT` (it is blank on the
+> professional-line population); the former INNER-join / OSCAR-not-null filters
+> that dropped the whole professional population are gone.
+>
+> **Final-action note (Medicaid):** the Medicaid extract filters
+> `CLM_FINL_ACTN_IND='T'` so only the final version of each claim is counted.
+> `V2_MDCD_CLM` carries original + adjustment + voided versions (each its own
+> `CLM_UNIQ_ID`; ~8.5% of rows are non-final). Without the filter, superseded
+> versions double-count recipients and carry since-corrected provider/address
+> combos. **The domain is `T`/`F`, NOT Medicare's `Y`/`N`** — filtering `='Y'`
+> silently returns zero rows. Medicare applies the same idea via
+> `CLM_FINL_ACTN_IND='Y'`.
 
 No patient identifiers are emitted anywhere — only the aggregate counts above.
 
@@ -28,7 +60,7 @@ resolve the NPI; it just isn't in the output.
 
 | Column | Meaning | Join role |
 |---|---|---|
-| **`PRVDR_NPI_NUM`** | Provider NPI (resolved from the source `PRVDR_SK`) | **JOIN → any NPI column in the Medicare extract** (billing/org or the 7 role NPIs) |
+| **`PRVDR_NPI_NUM`** | Provider NPI (resolved from the source `PRVDR_SK`) | **JOIN → any NPI column in the Medicare extract** (billing/org or the 10 role NPIs) |
 | **`PRVDR_OSCAR_NUM`** | OSCAR / CCN institutional identifier | **JOIN → `CLM_BLG_PRVDR_OSCAR_NUM`** in the Medicare extract |
 | `PRVDR_NPI_OSCAR_BGN_DT` / `_END_DT` | NPI↔OSCAR association begin/end dates | time-scope a match |
 | `CLM_CNTRCTR_NUM` | Medicare contractor number | context |
@@ -41,6 +73,13 @@ resolve the NPI; it just isn't in the output.
 | `PRVDR_NPI_OSCAR_PHNE_NUM` | Phone | enrichment |
 | `PRVDR_NPI_OSCAR_TYPE_CD` | Provider/association type (sparse ~33%) | context |
 | `PRVDR_LGCY_ADR_TYPE_CD` | Legacy address type | context |
+| `PRVDR_TYPE_CD`, `PRVDR_TXNMY_CMPST_CD` | Provider type + composite taxonomy (from `V2_DIM_PRVDR_CRNT`, 1:1) | enrichment |
+| `PRVDR_NCPDP_ID`, `PRVDR_DMEPOS_NUM`, `PRVDR_UPIN_NUM`, `PRVDR_PIN_NUM`, `PRVDR_EMPLR_ID_NUM`, `PRVDR_STATE_LCNS_NUM` | Alternate provider IDs (from the dimension) | **cross-walk → other ID systems** |
+| `PRVDR_PRCTC_LINE_1_ADR` / `_2_ADR` + `GEO_PRVDR_PRCTC_ZIP4_CD`; `PRVDR_MLG_LINE_1_ADR` / `_2_ADR` + `GEO_PRVDR_MLG_ZIP4_CD` | Practice + mailing street address with ZIP+4 (from the dimension) | enrichment |
+
+The `PRVDR_*` rows from `PRVDR_TYPE_CD` down are folded in from
+`V2_DIM_PRVDR_CRNT` on the same 1:1 `PRVDR_SK` join (no extra rows). Provider
+birth date is **excluded** (provider PII).
 
 **Joining to the Medicare extract** — two paths, either direction:
 
@@ -71,16 +110,17 @@ many rows.
 | `PRVDR_ID_ISSG_ENT_ID` | Issuing entity | context |
 | `PRVDR_SRC_EFCTV_DT` / `_END_DT` | Source effective/end dates of the ID association | time-scope |
 | `PRVDR_LAST_NAME` / `_1ST_NAME` / `_MDL_INITL_NAME` | Individual provider name | enrichment |
-| `PRVDR_ORG_NAME` / `_LGL_NAME` / `_DBA_NAME` | Org / legal / DBA name | enrichment |
+| `PRVDR_ORG_NAME` / `_LGL_NAME` / `_DBA_NAME` / `_TAX_NAME` | Org / legal / DBA / tax name | enrichment |
 | `PRVDR_FAC_GRP_INDVDL_CD` | Facility / group / individual classification | context |
 | `PRVDR_MDCD_ADR_TYPE_CD` | Folded-address type (1 billing / 2 mailing / 3 practice / 4 service-location; priority 4>3>1>2) | context |
 | `PRVDR_LINE_1_ADR` / `_2_ADR` / `_3_ADR` | Provider street address | enrichment |
 | `PRVDR_ADR_CITY_NAME` / `_STATE_CD` / `_ZIP_CD` / `_CNTY_CD` | City / state / ZIP / county | enrichment |
 | `PRVDR_PHNE_NUM` | Phone | enrichment |
 
-**Joining to the Medicaid extract** — the extract carries NPIs
-(`CLM_ADMTG_ / CLM_BLG_ / CLM_SPRVSNG_ / CLM_SRVC_LCTN_ORG_PRVDR_NPI_NUM`) but
-this crosswalk is keyed on State Medicaid ID, so bridge through the NPI rows:
+**Joining to the Medicaid extract** — the extract carries the billing/admitting/
+supervising/service-location NPIs plus the referring, ordering, prescribing,
+rx-dispensing and health-home role NPIs, but this crosswalk is keyed on State
+Medicaid ID, so bridge through the NPI rows:
 
 1. Filter the crosswalk to `PRVDR_MDCD_ID_TYPE_CD = '2'` (NPI rows only).
 2. Join `medicaid_extract.<NPI column>` = `medicaid_id.PRVDR_ID`
@@ -132,3 +172,82 @@ LEFT   JOIN medicaid_id_crosswalk x
        ON x.PRVDR_ID = e.CLM_BLG_PRVDR_NPI_NUM
       AND x.PRVDR_MDCD_ID_TYPE_CD = '2'          -- NPI rows only
 ```
+
+---
+
+## Worked example — Arkansas Heart Hospital (NPI 1558653212)
+
+A single NPI that lands in all four files, so it exercises both crosswalks and
+the cross-program bridge. (Federal tax number masked here as `56-XXXXXXX`.)
+
+### The two join spines
+
+```
+  NPI ............ in every file  (the universal key)
+  OSCAR/CCN ...... Medicare side only  (institutional identifier)
+  State Medicaid ID (PRVDR_STATE_MDCD_ID + SUBMTG_MDCD_LCL_STATE_CD)
+                   Medicaid crosswalk's native key -- reached THROUGH the NPI
+```
+
+### A. Medicare extract → NPI↔OSCAR crosswalk
+
+Join on the billing NPI: `medicare.CLM_BLG_PRVDR_NPI_NUM = npi_oscar.PRVDR_NPI_NUM`
+
+```
+ MEDICARE EXTRACT ROW
+   CLM_BLG_PRVDR_NPI_NUM = 1558653212
+   OSCAR = 040134   POS = 1901 ENCORE WAY, BENTON, AR   CNT_BENE = 18
+        │
+        │  JOIN  CLM_BLG_PRVDR_NPI_NUM = PRVDR_NPI_NUM
+        ▼
+ npi_oscar CROSSWALK  (association table -> fans out over time)
+   NPI 1558653212 │ OSCAR 040134 │ BGN 2011-10-13 │ MEDCATH OF LITTLE ROCK LLC   │ 56-XXXXXXX │ 1701 S SHACKLEFORD RD, LITTLE ROCK AR
+   NPI 1558653212 │ OSCAR 040134 │ BGN 2013-04-30 │ ARKANSAS HEART HOSPITAL,LLC  │ 56-XXXXXXX │ 1701 S SHACKLEFORD RD, LITTLE ROCK AR
+   NPI 1558653212 │ OSCAR 040134 │ BGN 2019-01-16 │ ARKANSAS HEART HOSPITAL LLC  │ 56-XXXXXXX │ 1701 S SHACKLEFORD RD, LITTLE ROCK AR
+```
+
+The 3 rows are the **fan-out caveat**: same NPI, renamed entity over time. Collapse
+by deduping the columns you need, or point-in-time with
+`<claim date> BETWEEN PRVDR_NPI_OSCAR_BGN_DT AND PRVDR_NPI_OSCAR_END_DT`.
+
+### B. Medicaid extract → Medicaid ID crosswalk
+
+The crosswalk is keyed on state Medicaid ID, so bridge through the NPI rows
+(`PRVDR_MDCD_ID_TYPE_CD = '2'`):
+`medicaid.CLM_BLG_PRVDR_NPI_NUM = medicaid_id.PRVDR_ID  AND  TYPE_CD = '2'`
+
+```
+ MEDICAID EXTRACT ROW
+   CLM_BLG_PRVDR_NPI_NUM = 1558653212   CNT_RECIPIENTS = 2964
+        │
+        │  JOIN  PRVDR_ID = CLM_BLG_PRVDR_NPI_NUM  AND  PRVDR_MDCD_ID_TYPE_CD = '2'
+        ▼
+ medicaid_id CROSSWALK  (state-scoped -> same NPI, different state IDs)
+   STATE_MDCD_ID 769850343001 │ state 22 (LA) │ ARKANSAS HEART HOSPITAL LLC
+   STATE_MDCD_ID 234152002    │ state 05 (AR) │ ARKANSAS HEART HOSPITAL,LLC
+        │
+        │  2nd hop: re-query the SAME (STATE_MDCD_ID, STATE) key with other TYPE_CD
+        ▼        3 -> Medicare id | 5 -> federal tax id | 4 -> NCPDP | 1 -> state id
+   full identifier set for that provider within that state
+```
+
+**State-scoping is live here:** the same hospital enrolled in both Arkansas (05)
+and Louisiana (22) Medicaid under different state IDs — always carry
+`SUBMTG_MDCD_LCL_STATE_CD` with `PRVDR_STATE_MDCD_ID`.
+
+### C. Cross-program bridge (the payoff)
+
+Because NPI 1558653212 appears in **both** extracts, the programs resolve to one
+real-world entity:
+
+```
+ Medicare extract  ─(CLM_BLG_PRVDR_NPI_NUM)─┐
+                                            ├─► NPI 1558653212 ─► npi_oscar   ─► OSCAR 040134, TIN, Little Rock HQ
+ Medicaid extract  ─(CLM_BLG_PRVDR_NPI_NUM)─┘                   └─► medicaid_id ─► AR id 234152002 + LA id 769850343001
+```
+
+From two aggregate claim rows — "18 Medicare beneficiaries at a Benton clinic"
+and "2,964 Medicaid recipients billed" — you land on a single identity:
+**Arkansas Heart Hospital LLC**, OSCAR 040134, enrolled in Medicare since 1997 and
+in both AR and LA Medicaid. The NPI is the hinge; the crosswalks turn it into
+names, OSCARs, TINs, addresses, and alternate IDs on each side.

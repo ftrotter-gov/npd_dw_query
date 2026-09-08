@@ -13,9 +13,15 @@ dimension (V2_DIM_PRVDR_CRNT), which carries both PRVDR_SK and PRVDR_NPI_NUM.
 
 Output grain: one row per native V2_MDCR_PRVDR_NPI_OSCAR row (a dated
 NPI/OSCAR association), with the resolved PRVDR_NPI_NUM as column 1 (the real
-join key). Business columns are passed through verbatim; only the joined
-PRVDR_NPI_NUM is normalized ('' / '~' -> NULL). No date window -- this is the
-whole table.
+join key). Business columns are passed through verbatim; the joined
+PRVDR_NPI_NUM and the appended dimension-enrichment columns are normalized
+('' / '~' -> NULL). No date window -- this is the whole table.
+
+  Because the PRVDR_SK join to V2_DIM_PRVDR_CRNT is already 1:1, provider-identity
+  attributes are folded in at NO extra row cost (see DIM_ENRICH_COLS): provider
+  type, composite taxonomy, the alternate provider IDs (NCPDP / DMEPOS / UPIN /
+  PIN / employer / state-license), and the practice + mailing street address with
+  ZIP+4. Provider birth date is EXCLUDED (provider PII).
 
   IDR-internal keys are NOT emitted -- PRVDR_SK (used only in the join to resolve
   the NPI), GEO_SK, META_SK and META_SRC_SK are IDR plumbing with no join value
@@ -90,6 +96,29 @@ NATIVE_COLS = [
     "PRVDR_LGCY_ADR_TYPE_CD",
 ]
 
+# Provider-identity enrichment folded in from the already-joined
+# V2_DIM_PRVDR_CRNT (alias D) -- the join is already 1:1 on PRVDR_SK, so these add
+# columns without adding rows. Provider type, composite taxonomy, the alternate
+# provider IDs, and the practice/mailing street address. Each is normalized
+# ('' / '~' -> NULL). PRVDR_BIRTH_DT is deliberately EXCLUDED (provider PII); the
+# surrogate GEO_*_SK keys stay internal, but the real ZIP+4 is emitted.
+DIM_ENRICH_COLS = [
+    "PRVDR_TYPE_CD",
+    "PRVDR_TXNMY_CMPST_CD",
+    "PRVDR_NCPDP_ID",
+    "PRVDR_DMEPOS_NUM",
+    "PRVDR_UPIN_NUM",
+    "PRVDR_PIN_NUM",
+    "PRVDR_EMPLR_ID_NUM",
+    "PRVDR_STATE_LCNS_NUM",
+    "PRVDR_PRCTC_LINE_1_ADR",
+    "PRVDR_PRCTC_LINE_2_ADR",
+    "GEO_PRVDR_PRCTC_ZIP4_CD",
+    "PRVDR_MLG_LINE_1_ADR",
+    "PRVDR_MLG_LINE_2_ADR",
+    "GEO_PRVDR_MLG_ZIP4_CD",
+]
+
 
 # ============================================================================
 # QUERY
@@ -105,10 +134,12 @@ def build_crosswalk_sql(stage_target):
     is never emitted; the other IDR-internal keys (GEO_SK, META_SK, META_SRC_SK)
     are dropped from NATIVE_COLS entirely.
     """
-    # Resolved NPI first (the real join key), then the business native columns.
+    # Resolved NPI first (the real join key), then the business native columns,
+    # then the provider-dimension enrichment (same 1:1 join, no fan-out).
     select_cols = (
         ["NULLIF(NULLIF(TRIM(D.PRVDR_NPI_NUM), ''), '~') AS PRVDR_NPI_NUM"]
         + [f"O.{c}" for c in NATIVE_COLS]
+        + [f"NULLIF(NULLIF(TRIM(D.{c}), ''), '~') AS {c}" for c in DIM_ENRICH_COLS]
     )
     select_list = ",\n    ".join(select_cols)
 
