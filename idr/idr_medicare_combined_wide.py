@@ -24,7 +24,8 @@ DESIGN
   V2_MDCR_CLM_LINE_PRFNL (professional line, where present)
     adds: POS street-address block + POS provider/org name + line
           specialty/locality
-        |  + LEFT JOIN V2_MDCR_CLM_LINE (base line) on the FULL line key for the
+        |  + LEFT JOIN V2_MDCR_CLM_LINE (base line) on the full LINE grain
+        |    (4-key claim signature + CLM_LINE_NUM, CLM_TYPE_CD INCLUDED) for the
         |    POS TYPE code (CLM_POS_CD) -- not on the prof-line view; kept on the
         |    same line as the POS address above.
         v
@@ -223,9 +224,11 @@ POS_COLS = [
 
 # Place-of-service TYPE code (2-digit: 11 office, 12 home, 21 inpatient hospital,
 # 31 SNF, ...). It is NOT on the professional-line view -- it lives on the base
-# claim line V2_MDCR_CLM_LINE (POSL below), which shares the full line key
-# (GEO_BENE_SK + CLM_DT_SGNTR_SK + CLM_NUM_SK + CLM_LINE_NUM) with the
-# professional line, so it stays aligned to the SAME line as the POS street
+# claim line V2_MDCR_CLM_LINE (POSL below), which shares the full LINE grain
+# (GEO_BENE_SK + CLM_DT_SGNTR_SK + CLM_NUM_SK + CLM_TYPE_CD + CLM_LINE_NUM) with
+# the professional line -- CLM_TYPE_CD INCLUDED, or a different claim type sharing
+# the 3-key + line-num bleeds a wrong POS code (idr-query rule #2, same trap as
+# the header join). Joined so it stays aligned to the SAME line as the POS street
 # address above. IN-GRAIN, alongside the POS block. Emitted as the raw code --
 # decode via the IDR CLM_POS_CD reference table downstream if a label is needed
 # (matches CLM_TYPE_CD below and the Medicaid combined extract's raw CLM_POS_CD).
@@ -274,8 +277,11 @@ def build_medicare_combined_wide_sql(stage_target, start_sql, end_sql, min_bene)
                 lines to that claim (the 3-key is NOT unique on the final header --
                 CLM_NUM_SK recurs across claim types). The POS TYPE code
                 (CLM_POS_CD) is LEFT-joined from the base claim line
-                V2_MDCR_CLM_LINE (POSL) on the full line key, aligned to the same
-                line as the POS street address.
+                V2_MDCR_CLM_LINE (POSL) on the full LINE grain (4-key claim
+                signature INCLUDING CLM_TYPE_CD + CLM_LINE_NUM), aligned to the
+                same line as the POS street address; CLM_TYPE_CD is required or a
+                different claim type sharing the 3-key + line-num bleeds a wrong
+                POS code.
                 Window filter is CLM_THRU_DT with CLM_FINL_ACTN_IND='Y'.
 
       agg    -- GROUP BY the whole signature (everything except the MBI and the
@@ -381,12 +387,19 @@ WITH base AS (
         ON POSL.GEO_BENE_SK      = CLINE.GEO_BENE_SK
        AND POSL.CLM_DT_SGNTR_SK  = CLINE.CLM_DT_SGNTR_SK
        AND POSL.CLM_NUM_SK       = CLINE.CLM_NUM_SK
+       AND POSL.CLM_TYPE_CD      = CLINE.CLM_TYPE_CD
        AND POSL.CLM_LINE_NUM     = CLINE.CLM_LINE_NUM
        -- POS TYPE code lives on the base claim line, keyed 1:1 with the
-       -- professional line on the full line key, so it stays on the SAME line as
-       -- the POS street address above. LEFT so a professional line with no
-       -- base-line match (and the non-professional population, where CLINE is
-       -- already NULL) keeps the row with CLM_POS_CD just NULL.
+       -- professional line on the full LINE grain -- which, like the header, is
+       -- (GEO_BENE_SK + CLM_DT_SGNTR_SK + CLM_NUM_SK + CLM_TYPE_CD) PLUS
+       -- CLM_LINE_NUM. CLM_TYPE_CD is REQUIRED: without it the 3-key+line-num is
+       -- NOT unique (CLM_NUM_SK + line-num recur across claim types sharing a
+       -- date-signature), so a base line of a DIFFERENT claim type bleeds a wrong
+       -- CLM_POS_CD onto this professional line -- verified 1-month: this 4-key
+       -- join gives exact 1:1 (+0 rows), dropping CLM_TYPE_CD fans out by
+       -- +3,235,454 rows. LEFT so a professional
+       -- line with no base-line match (and the non-professional population, where
+       -- CLINE is already NULL) keeps the row with CLM_POS_CD just NULL.
     WHERE CLAIM.CLM_THRU_DT       >= DATE '{start_sql}'
       AND CLAIM.CLM_THRU_DT        < DATE '{end_sql}'
       AND CLAIM.CLM_FINL_ACTN_IND  = 'Y'
