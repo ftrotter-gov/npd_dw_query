@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>IDR Worksheet</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <!-- ── TOP STATUS BAR ─────────────────────────────────────────────── -->
+  <header id="statusbar">
+    <div class="brand">IDR&nbsp;Worksheet</div>
+    <div id="conn" class="pill pill-off">● connecting…</div>
+    <div id="ident" class="ident"></div>
+    <div class="spacer"></div>
+    <div id="idlenote" class="idlenote"></div>
+    <button id="patBtn" class="btn">Enter PAT</button>
+    <button id="patClear" class="btn btn-ghost" title="Forget PAT (RAM only)">Forget</button>
+  </header>
+
+  <div id="main">
+    <!-- ── LEFT: script/worksheet browser ───────────────────────────── -->
+    <aside id="sidebar">
+      <div class="side-title">Worksheets</div>
+      <div id="wsList" class="list"></div>
+      <div class="side-title">Repo scripts <span class="muted">(reference)</span></div>
+      <div id="scriptList" class="list"></div>
+    </aside>
+
+    <!-- ── CENTER: editor + controls ────────────────────────────────── -->
+    <section id="center">
+      <div id="wsHeader">
+        <span id="wsTitle">Select a worksheet</span>
+        <span id="wsBadge" class="badge"></span>
+      </div>
+      <p id="wsDesc" class="desc"></p>
+
+      <div id="editor"></div>
+
+      <div id="controls">
+        <label class="ctl">
+          <span>Output S3 path</span>
+          <input id="s3path" type="text" spellcheck="false"
+                 placeholder="s3://YOUR_BUCKET/idr_worksheet/">
+        </label>
+        <label class="ctl ctl-check">
+          <input id="saveS3" type="checkbox">
+          <span>Write result to S3</span>
+        </label>
+        <div class="spacer"></div>
+        <button id="runBtn" class="btn btn-run" disabled>Run ▶</button>
+        <button id="cancelBtn" class="btn btn-cancel" disabled>Cancel</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- ── BOTTOM: results + console ─────────────────────────────────── -->
+  <section id="output">
+    <div class="tabs">
+      <button class="tab tab-active" data-tab="result">Result</button>
+      <button class="tab" data-tab="console">Console</button>
+      <div class="spacer"></div>
+      <span id="runStatus" class="runstatus"></span>
+    </div>
+    <div id="resultPane" class="pane"><div class="empty">Run a query to see results.</div></div>
+    <pre id="consolePane" class="pane hidden"></pre>
+  </section>
+
+  <!-- ── PAT modal ─────────────────────────────────────────────────── -->
+  <div id="patModal" class="modal hidden">
+    <div class="modal-card">
+      <h3>Snowflake PAT</h3>
+      <p class="muted">Held in server memory for this browser session only. Never
+         written to disk, environment, Secrets Manager, or logs. Cleared on Forget,
+         idle expiry, or when the task stops.</p>
+      <input id="patInput" type="password" placeholder="paste your PAT" autocomplete="off">
+      <div class="modal-actions">
+        <button id="patCancel" class="btn btn-ghost">Cancel</button>
+        <button id="patSave" class="btn btn-run">Connect</button>
+      </div>
+      <div id="patErr" class="err"></div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.45.0/min/vs/loader.min.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>
