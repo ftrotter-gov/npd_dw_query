@@ -19,9 +19,13 @@ decodes (V2_MDCD_PRVDR_ID_TYPE_CD) as:
 This keeps the LONG format (one id per row, verbatim), and FOLDS IN two
 reference attributes per provider:
 
-  name    -- from V2_MDCD_PRVDR_DMGRPHC_CRNT, joined 1:1 on (state, Medicaid ID).
-             Individual + organization/legal/DBA names only. Birth date, death
-             date and sex are intentionally NOT folded in.
+  name    -- from V2_MDCD_PRVDR_DMGRPHC_CRNT, folded on (state, Medicaid ID).
+             The join is NOT assumed 1:1: the dem CTE first dedups to one row per
+             (state, Medicaid ID) via QUALIFY ROW_NUMBER() -- most-recent
+             PRVDR_SRC_EFCTV_DT, tie-broken by IDR_UPDT_TS DESC -- so a duplicate
+             demographic row cannot fan out the long crosswalk. Individual +
+             organization/legal/DBA/tax names only. Birth date, death date and
+             sex are intentionally NOT folded in.
 
   address -- from V2_MDCD_PRVDR_LCTN_CRNT, joined on (state, Medicaid ID,
              location). A location carries up to four address-type rows
@@ -30,9 +34,14 @@ reference attributes per provider:
              location first, to match the claims extract's orientation), keeping
              the join 1:1 and the long crosswalk row count unchanged.
 
-  Verified 2026-08-30: V2_MDCD_PRVDR_ID_CRNT is 82,836,399 rows, all
-  IDR_LTST_TRANS_FLG='Y' (the _CRNT view is already current-only, so no stale-
-  transaction filter is needed). Excluding SSN leaves ~73.3M rows.
+  Verified 2026-09-07: V2_MDCD_PRVDR_ID_CRNT is 184,167,056 rows (NOT current-
+  only at the row grain -- it carries dated version history and has NO
+  IDR_LTST_TRANS_FLG column). Excluding SSN leaves 158,772,841 raw rows =
+  73,256,451 distinct id-records x ~2.17 dated versions (109M rows already
+  END-dated). The ids CTE therefore collapses to the most-recent version per
+  id-record (QUALIFY ROW_NUMBER by PRVDR_SRC_EFCTV_DT), giving ~73.3M rows --
+  the true current crosswalk grain. (The earlier 2026-08-30 note of "82.8M rows,
+  all LTST='Y'" was wrong on both counts.)
 
 No date window -- this is the whole current crosswalk.
 
@@ -111,7 +120,24 @@ WITH ids AS (
         PRVDR_SRC_EFCTV_DT,
         PRVDR_SRC_END_DT
     FROM {ID_CRNT}
-    WHERE PRVDR_MDCD_ID_TYPE_CD <> '7'          -- exclude SSN (provider PII)
+    WHERE TRIM(PRVDR_MDCD_ID_TYPE_CD) <> '7'    -- exclude SSN (provider PII);
+                                                 -- TRIM so a padded '7 ' cannot
+                                                 -- slip an SSN row through
+    -- V2_MDCD_PRVDR_ID_CRNT is NOT current-only at the row grain: it carries
+    -- dated version history (verified 2026-09-07: 158.8M non-SSN rows = 73.3M
+    -- distinct id-records x ~2.17 versions; 109M rows are already END-dated).
+    -- There is NO IDR_LTST_TRANS_FLG on this view, so collapse to the most-
+    -- recent version per id-record via effective date (prefer the still-open one
+    -- on ties). Yields ~73.3M rows -- the true current crosswalk grain.
+    QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY SUBMTG_MDCD_LCL_STATE_CD,
+                     PRVDR_STATE_MDCD_ID,
+                     PRVDR_LCTN_ID,
+                     PRVDR_MDCD_ID_TYPE_CD,
+                     NULLIF(NULLIF(TRIM(PRVDR_ID), ''), '~')
+        ORDER BY PRVDR_SRC_EFCTV_DT DESC NULLS LAST,
+                 PRVDR_SRC_END_DT   DESC NULLS FIRST
+    ) = 1
 ),
 
 addr AS (
@@ -137,6 +163,32 @@ addr AS (
                      WHEN '4' THEN 1 WHEN '3' THEN 2
                      WHEN '1' THEN 3 WHEN '2' THEN 4 ELSE 5 END
     ) = 1
+),
+
+dem AS (
+    -- one demographic row per (state, Medicaid ID): the _CRNT view SHOULD be
+    -- current-only, but the join is not guaranteed 1:1 on (state, mdcd_id), so
+    -- dedup here (mirroring addr) BEFORE the fold or a dup fans out the long
+    -- crosswalk and duplicates its rows. Keep the most-recent source-effective
+    -- row, tie-broken by IDR_UPDT_TS DESC (the demographic view carries no unique
+    -- surrogate key; PRVDR_BIRTH_DT/PRVDR_DEATH_DT are PII and are NOT selected).
+    SELECT
+        PRVDR_STATE_MDCD_ID,
+        SUBMTG_MDCD_LCL_STATE_CD,
+        PRVDR_LAST_NAME,
+        PRVDR_1ST_NAME,
+        PRVDR_MDL_INITL_NAME,
+        PRVDR_ORG_NAME,
+        PRVDR_LGL_NAME,
+        PRVDR_DBA_NAME,
+        PRVDR_TAX_NAME,
+        PRVDR_FAC_GRP_INDVDL_CD
+    FROM {DMGRPHC}
+    QUALIFY ROW_NUMBER() OVER (
+        PARTITION BY PRVDR_STATE_MDCD_ID, SUBMTG_MDCD_LCL_STATE_CD
+        ORDER BY PRVDR_SRC_EFCTV_DT DESC NULLS LAST,
+                 IDR_UPDT_TS DESC NULLS LAST
+    ) = 1
 )
 
 SELECT
@@ -156,6 +208,7 @@ SELECT
     NULLIF(NULLIF(TRIM(DEM.PRVDR_ORG_NAME), ''), '~')    AS PRVDR_ORG_NAME,
     NULLIF(NULLIF(TRIM(DEM.PRVDR_LGL_NAME), ''), '~')    AS PRVDR_LGL_NAME,
     NULLIF(NULLIF(TRIM(DEM.PRVDR_DBA_NAME), ''), '~')    AS PRVDR_DBA_NAME,
+    NULLIF(NULLIF(TRIM(DEM.PRVDR_TAX_NAME), ''), '~')    AS PRVDR_TAX_NAME,
     DEM.PRVDR_FAC_GRP_INDVDL_CD                          AS PRVDR_FAC_GRP_INDVDL_CD,
     -- folded-in address (one per location, priority-picked)
     ADDR.PRVDR_MDCD_ADR_TYPE_CD,
@@ -168,7 +221,7 @@ SELECT
     NULLIF(NULLIF(TRIM(ADDR.PRVDR_ADR_CNTY_CD), ''), '~')   AS PRVDR_ADR_CNTY_CD,
     NULLIF(NULLIF(TRIM(ADDR.PRVDR_PHNE_NUM), ''), '~')      AS PRVDR_PHNE_NUM
 FROM ids
-LEFT JOIN {DMGRPHC} AS DEM
+LEFT JOIN dem AS DEM
     ON  DEM.PRVDR_STATE_MDCD_ID      = ids.PRVDR_STATE_MDCD_ID
     AND DEM.SUBMTG_MDCD_LCL_STATE_CD = ids.SUBMTG_MDCD_LCL_STATE_CD
 LEFT JOIN addr AS ADDR

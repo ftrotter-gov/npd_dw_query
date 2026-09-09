@@ -31,10 +31,10 @@ run() {
   return $rc
 }
 
-run idr_medicare_entity_link_address_wide.py  medicare_extract
-run idr_npi_oscar_crosswalk.py                 medicare_crosswalk
-run idr_medicaid_entity_link_address_wide.py   medicaid_extract
-run idr_medicaid_id_crosswalk.py               medicaid_crosswalk
+run idr_medicare_combined_wide.py   medicare_extract
+run idr_npi_oscar_crosswalk.py      medicare_crosswalk
+run idr_medicaid_combined_wide.py   medicaid_extract
+run idr_medicaid_id_crosswalk.py    medicaid_crosswalk
 
 echo "=== ALL RUNS COMPLETE $(date -u +%Y-%m-%dT%H:%M:%SZ) ===" | tee -a "$MASTER"
 ls -la idr_data/*.csv 2>/dev/null | tee -a "$MASTER"
